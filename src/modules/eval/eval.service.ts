@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { RegistryRunner } from '@shared/runner/registry.runner';
 import Docker from 'dockerode';
 import { buildImageFromTar } from 'src/shared/docker/utils/buildImageFromTar';
 import { PassThrough } from 'stream';
-
-interface EvalDto {
-	code: string;
-}
+import { EvalDto } from './dto/eval.dto';
 
 interface RunResult {
 	statusCode: number;
@@ -23,38 +21,44 @@ export class EvalService {
 	private readonly docker: Docker;
 
 	constructor(
+		private readonly registryRunner: RegistryRunner
 	) {
 		this.docker = new Docker();
 	}
 
 	async eval(body: EvalDto) {
-		const { code } = body;
-		const tag = `runner-go:${Date.now()}`;
+		const { code, language, testCases = [] } = body;
 
-		const image = await buildImageFromTar(tag, {
-			'Dockerfile': [
-				'FROM golang:1.24-alpine AS builder',
-				'WORKDIR /app',
-				'COPY main.go .',
-				'RUN CGO_ENABLED=0 go build -o /app/main main.go',
-				'',
-				'FROM alpine:3.20',
-				'WORKDIR /app',
-				'COPY --from=builder /app/main .',
-				'USER nobody',
-				'CMD ["/app/main"]',
-			].join('\n'),
-			'main.go': code,
+		const runner = this.registryRunner.get(language);
+		const tag = `runner-${language}:${Date.now()}`;
+		const wrappedCode = runner.wrapCode(code, testCases);
+
+		const buildResult = await buildImageFromTar(tag, {
+			Dockerfile: runner.getDockerfile(),
+			[runner.getFileName()]: wrappedCode,
 		});
-		const container = await this.createSandboxContainer(image);
+
+		if (!buildResult.success) {
+			return {
+				stdout: null,
+				stderr: buildResult.logs?.join('') || buildResult.error || 'Build failed',
+				statusCode: -1,
+				outputExceeded: false,
+				timedOut: false,
+			};
+		}
+
+		const container = await this.createSandboxContainer(tag);
 
 		try {
 			const runResult = await this.runWithTimeout(container, 5000);
 			const logsResult = await this.collectLogs(container, 1 * 1024 * 1024);
 
+			const parsedResult = runner.parseResult(logsResult.stdout);
+
 			if (logsResult.outputExceeded) {
 				return {
-					stdout: '',
+					stdout: null,
 					stderr: 'Output limit exceeded',
 					statusCode: -1,
 					outputExceeded: true,
@@ -64,7 +68,7 @@ export class EvalService {
 
 			if (runResult.timedOut) {
 				return {
-					stdout: logsResult.stdout,
+					stdout: parsedResult,
 					stderr: logsResult.stderr,
 					statusCode: -1,
 					outputExceeded: false,
@@ -73,7 +77,7 @@ export class EvalService {
 			}
 
 			return {
-				stdout: logsResult.stdout,
+				stdout: parsedResult,
 				stderr: logsResult.stderr,
 				statusCode: runResult.statusCode,
 				outputExceeded: false,
@@ -81,7 +85,7 @@ export class EvalService {
 			};
 		} finally {
 			await container.remove({ force: true }).catch(() => undefined);
-			await this.docker.getImage(image).remove({ force: true }).catch(() => undefined)
+			await this.docker.getImage(tag).remove({ force: true }).catch(() => undefined);
 		}
 	}
 
@@ -91,6 +95,7 @@ export class EvalService {
 			Image: image,
 			Tty: false,
 			HostConfig: {
+				AutoRemove: true,
 				CapDrop: ['ALL'],
 				SecurityOpt: ['no-new-privileges'],
 				Memory: 128 * 1024 * 1024,

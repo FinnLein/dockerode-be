@@ -63,7 +63,7 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
 	}
 
 	private async connect() {
-		const url = process.env.RABBITMQ_URL || 'amqp://user:password@localhost:5672'
+		const url = process.env.RABBITMQ_URL || 'amqp://user:pass@localhost:5672'
 
 		try {
 			this.connection = await connect(url)

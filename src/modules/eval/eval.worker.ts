@@ -15,13 +15,18 @@ export class EvalWorker implements OnModuleInit {
 
 	async onModuleInit() {
 		await this.rabbitMQService.consume('code-eval', async (msg) => {
-			const { jobId, code } = msg as { jobId: string; code: string };
+			const { jobId, code, language, testCases } = msg as {
+				jobId: string;
+				code: string;
+				language: string;
+				testCases: unknown[];
+			};
 
 			this.logger.log(`Processing job ${jobId}`);
 
 
 			try {
-				const result = await this.evalService.eval({ code });
+				const result = await this.evalService.eval({ code, language, testCases });
 
 				this.logger.log(`Job ${jobId} finished: ${JSON.stringify(result)}`);
 

@@ -57,4 +57,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 node_modules/
 dist/
 
-/prisma/generated/
+generated
+tsconfig.build.tsbuildinfo
