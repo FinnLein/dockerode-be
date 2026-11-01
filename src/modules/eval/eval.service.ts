@@ -1,23 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { RegistryRunner } from '@shared/runner/registry.runner';
 import Docker from 'dockerode';
 import { buildImageFromTar } from 'src/shared/docker/utils/buildImageFromTar';
 import { PassThrough } from 'stream';
+import { CheckSupportDto } from './dto/check-support.dto';
 import { EvalDto } from './dto/eval.dto';
-
-interface RunResult {
-	statusCode: number;
-	timedOut: boolean;
-}
-
-interface LogsResult {
-	stdout: string;
-	stderr: string;
-	outputExceeded: boolean;
-}
+import { LogsResult, ParsedResult, RunResult, TestResult } from './eval.types';
 
 @Injectable()
 export class EvalService {
+	private readonly logger = new Logger(EvalService.name);
 	private readonly docker: Docker;
 
 	constructor(
@@ -25,8 +17,52 @@ export class EvalService {
 	) {
 		this.docker = new Docker();
 	}
+	
+	async checkSupport(dto: CheckSupportDto) {
+		this.logger.log(`Check-support: starting ${dto.tasks.length} tasks`);
 
-	async eval(body: EvalDto) {
+		const results = await Promise.allSettled(
+			dto.tasks.map(async (task) => {
+				const { name, language, testCases, code } = task;
+				const start = Date.now();
+
+				this.logger.debug(`[START] ${name} (${language})`);
+
+				try {
+					const result = await this.eval({ language, code, testCases });
+					const duration = Date.now() - start;
+
+					this.logger.log(
+						`[DONE] ${name} | ${result.success ? 'OK' : 'FAIL'} | ${duration}ms | passed=${result.passed}/${result.total}`,
+					);
+
+					if (result.stderr) {
+						this.logger.warn(`[STDERR] ${name}: ${result.stderr.slice(0, 200)}...`);
+					}
+
+					return result;
+				} catch (error) {
+					const duration = Date.now() - start;
+					const message = error instanceof Error ? error.message : String(error);
+					this.logger.error(`[FAILED] ${name} | ${duration}ms | ${message}`);
+					throw error;
+				}
+			}),
+		);
+
+		this.logger.log(`Check-support: finished`);
+
+		return dto.tasks.map((task, index) => {
+			const res = results[index];
+			if (res.status === 'fulfilled') {
+				return { name: task.name, status: 'fulfilled', result: res.value };
+			}
+			const message = res.reason instanceof Error ? res.reason.message : String(res.reason);
+			return { name: task.name, status: 'rejected', error: message };
+		});
+	}
+
+	async eval(body: EvalDto): Promise<TestResult> {
 		const { code, language, testCases = [] } = body;
 
 		const runner = this.registryRunner.get(language);
@@ -40,11 +76,16 @@ export class EvalService {
 
 		if (!buildResult.success) {
 			return {
-				stdout: null,
+				success: false,
+				passed: 0,
+				failed: testCases.length,
+				total: testCases.length,
+				results: [],
 				stderr: buildResult.logs?.join('') || buildResult.error || 'Build failed',
 				statusCode: -1,
 				outputExceeded: false,
 				timedOut: false,
+
 			};
 		}
 
@@ -54,11 +95,13 @@ export class EvalService {
 			const runResult = await this.runWithTimeout(container, 5000);
 			const logsResult = await this.collectLogs(container, 1 * 1024 * 1024);
 
-			const parsedResult = runner.parseResult(logsResult.stdout);
-
 			if (logsResult.outputExceeded) {
 				return {
-					stdout: null,
+					success: false,
+					passed: 0,
+					failed: testCases.length,
+					total: testCases.length,
+					results: [],
 					stderr: 'Output limit exceeded',
 					statusCode: -1,
 					outputExceeded: true,
@@ -68,7 +111,11 @@ export class EvalService {
 
 			if (runResult.timedOut) {
 				return {
-					stdout: parsedResult,
+					success: false,
+					passed: 0,
+					failed: testCases.length,
+					total: testCases.length,
+					results: [],
 					stderr: logsResult.stderr,
 					statusCode: -1,
 					outputExceeded: false,
@@ -76,13 +123,36 @@ export class EvalService {
 				};
 			}
 
+			const parsedResult = runner.parseResult(logsResult.stdout);
+			const actualResult: ParsedResult[] = Array.isArray(parsedResult) ? parsedResult : []
+
+			const results = testCases.map((tc, index) => {
+				const actual = actualResult.find(r => r.index === index)
+				const actualValue = actual?.actual ?? ''
+				const isPassed = actualValue === tc.expected && !actual?.error
+
+				return {
+					index,
+					passed: isPassed,
+					actual: actualValue,
+					expected: tc.expected,
+					error: actual?.error
+				};
+			})
+
+			const passed = results.filter(r => r.passed).length
+
 			return {
-				stdout: parsedResult,
+				success: passed === testCases.length,
+				passed,
+				failed: testCases.length - passed,
+				total: testCases.length,
+				results,
 				stderr: logsResult.stderr,
 				statusCode: runResult.statusCode,
 				outputExceeded: false,
 				timedOut: false,
-			};
+			}
 		} finally {
 			await container.remove({ force: true }).catch(() => undefined);
 			await this.docker.getImage(tag).remove({ force: true }).catch(() => undefined);

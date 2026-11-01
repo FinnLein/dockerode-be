@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService } from 'src/config/rabbitmq/rabbitmq.service';
 import { EvalService } from 'src/modules/eval/eval.service';
+import { TestCase } from './eval.types';
 import { SseService } from './sse.service';
 
 @Injectable()
@@ -19,7 +20,7 @@ export class EvalWorker implements OnModuleInit {
 				jobId: string;
 				code: string;
 				language: string;
-				testCases: unknown[];
+				testCases: TestCase[];
 			};
 
 			this.logger.log(`Processing job ${jobId}`);

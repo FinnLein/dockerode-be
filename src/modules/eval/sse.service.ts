@@ -4,7 +4,7 @@ import { Observable, Subject } from 'rxjs';
 @Injectable()
 export class SseService {
   private readonly streams = new Map<string, Subject<MessageEvent>>();
-  private readonly results = new Map<string, string | Record<string, unknown>>();
+  private readonly results = new Map<string, unknown>();
   private readonly cleanupTimers = new Map<string, NodeJS.Timeout>();
 
   register(jobId: string): Observable<MessageEvent> {
@@ -12,7 +12,7 @@ export class SseService {
     if (cachedResult !== undefined) {
       this.cleanup(jobId);
       return new Observable<MessageEvent>((subscriber) => {
-        subscriber.next({ data: cachedResult });
+        subscriber.next({ data: cachedResult as object });
         subscriber.complete();
       });
     }
@@ -29,12 +29,12 @@ export class SseService {
     });
   }
 
-  emit(jobId: string, data: string | Record<string, unknown>): void {
+  emit(jobId: string, data: unknown): void {
     this.results.set(jobId, data);
 
     const subject = this.streams.get(jobId);
     if (subject) {
-      subject.next({ data });
+      subject.next({ data: data as object });
       subject.complete();
       this.streams.delete(jobId);
     }
