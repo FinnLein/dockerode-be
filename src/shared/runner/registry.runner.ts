@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { GoRunner } from './go/go.runner';
+import { GoRunner } from './go';
+import { NodeRunner } from './node';
 import { LanguageRunner } from './types';
 
 @Injectable()
@@ -8,8 +9,10 @@ export class RegistryRunner {
 
 	constructor(
 		private readonly goRunner: GoRunner,
+		private readonly nodeRunner: NodeRunner
 	) {
 		this.register('go', this.goRunner)
+		this.register('node', this.nodeRunner)
 	}
 
 	get(language: string): LanguageRunner {

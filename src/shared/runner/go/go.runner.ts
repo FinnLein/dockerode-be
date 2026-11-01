@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { goTemplate } from '.';
 import { LanguageRunner } from '../types';
+import { goTemplate } from './template';
 
 @Injectable()
 export class GoRunner implements LanguageRunner {
