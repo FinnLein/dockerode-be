@@ -1,5 +1,9 @@
 import { UsersService } from '@modules/users/users.service';
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { hash, verify } from 'argon2';
 import { AuthorizeDto } from './dto/register.dto';

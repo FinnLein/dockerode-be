@@ -27,7 +27,7 @@ interface TestResult {
   passed: number;
   failed: number;
   total: number;
-  results: TestCaseResult[]; 
+  results: TestCaseResult[];
   stderr: string;
   statusCode: number;
   outputExceeded: boolean;
@@ -40,5 +40,11 @@ interface ParsedResult {
   error?: string;
 }
 
-export type { LogsResult, ParsedResult, RunResult, TestCase, TestCaseResult, TestResult };
-
+export type {
+  LogsResult,
+  ParsedResult,
+  RunResult,
+  TestCase,
+  TestCaseResult,
+  TestResult,
+};

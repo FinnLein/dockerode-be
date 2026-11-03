@@ -4,6 +4,6 @@ import { Controller, Post } from '@nestjs/common';
 export class AppController {
   @Post('health')
   healthCheck() {
-    return 'health'
+    return 'health';
   }
 }

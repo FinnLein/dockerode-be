@@ -15,7 +15,7 @@ export class EvalController {
     private readonly rabbitMQService: RabbitMQService,
     private readonly sseService: SseService,
     private readonly evalService: EvalService,
-  ) { }
+  ) {}
 
   @Post('check')
   async checkSupport(@Body() dto: CheckSupportDto) {
@@ -27,7 +27,9 @@ export class EvalController {
     const { code, language, testCases } = dto;
 
     const jobId = crypto.randomUUID();
-    this.logger.log(`Received eval request: jobId=${jobId}, language=${language}`);
+    this.logger.log(
+      `Received eval request: jobId=${jobId}, language=${language}`,
+    );
 
     await this.rabbitMQService.publish('code-eval', {
       jobId,

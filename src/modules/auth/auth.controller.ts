@@ -5,7 +5,7 @@ import { AuthorizeDto } from './dto/register.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   private setTokenCookie(res: Response, token: string) {
     res.cookie('access_token', token, {
@@ -18,14 +18,20 @@ export class AuthController {
   }
 
   @Post('register')
-  async register(@Body() dto: AuthorizeDto, @Res({ passthrough: true }) res: Response) {
+  async register(
+    @Body() dto: AuthorizeDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const { token, message } = await this.authService.register(dto);
     this.setTokenCookie(res, token);
     return { message };
   }
 
   @Post('login')
-  async login(@Body() dto: AuthorizeDto, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() dto: AuthorizeDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const { token, message } = await this.authService.login(dto);
     this.setTokenCookie(res, token);
     return { message };

@@ -10,7 +10,7 @@ export class TaskResponseDto {
 
   @ApiProperty({
     example: { markdown: '## Описание\nТекст задачи' },
-    description: 'JSON-объект с описанием (markdown)'
+    description: 'JSON-объект с описанием (markdown)',
   })
   description: Record<string, unknown>;
 

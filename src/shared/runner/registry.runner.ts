@@ -5,31 +5,31 @@ import { LanguageRunner } from './types';
 
 @Injectable()
 export class RegistryRunner {
-	private readonly runners = new Map<string, LanguageRunner>()
+  private readonly runners = new Map<string, LanguageRunner>();
 
-	constructor(
-		private readonly goRunner: GoRunner,
-		private readonly nodeRunner: NodeRunner
-	) {
-		this.register('go', this.goRunner)
-		this.register('node', this.nodeRunner)
-		this.register('javascript', this.nodeRunner)
-		this.register('js', this.nodeRunner)
-	}
+  constructor(
+    private readonly goRunner: GoRunner,
+    private readonly nodeRunner: NodeRunner,
+  ) {
+    this.register('go', this.goRunner);
+    this.register('node', this.nodeRunner);
+    this.register('javascript', this.nodeRunner);
+    this.register('js', this.nodeRunner);
+  }
 
-	get(language: string): LanguageRunner {
-		const runner = this.runners.get(language);
+  get(language: string): LanguageRunner {
+    const runner = this.runners.get(language);
 
-		if (!runner) {
-			throw new BadRequestException(
-				`Unsupported language: '${language}'. Available: ${Array.from(this.runners.keys()).join(', ')}`
-			);
-		}
+    if (!runner) {
+      throw new BadRequestException(
+        `Unsupported language: '${language}'. Available: ${Array.from(this.runners.keys()).join(', ')}`,
+      );
+    }
 
-		return runner;
-	}
+    return runner;
+  }
 
-	private register(language: string, runner: LanguageRunner) {
-		this.runners.set(language, runner)
-	}
+  private register(language: string, runner: LanguageRunner) {
+    this.runners.set(language, runner);
+  }
 }

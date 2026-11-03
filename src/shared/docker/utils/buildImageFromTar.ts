@@ -26,13 +26,16 @@ const buildImageFromTar = async (
   }
   pack.finalize();
 
-  const stream = await docker.buildImage(pack as unknown as NodeJS.ReadableStream, { t: name });
+  const stream = await docker.buildImage(
+    pack as unknown as NodeJS.ReadableStream,
+    { t: name },
+  );
 
   return new Promise<BuildResult>((res, rej) => {
     docker.modem.followProgress(stream, (err, output) => {
       if (err) return rej(err);
 
-      const items = output as BuildProgressItem[]
+      const items = output as BuildProgressItem[];
       const logs: string[] = [];
       let buildError: string | undefined;
 
@@ -51,4 +54,3 @@ const buildImageFromTar = async (
 };
 
 export { buildImageFromTar };
-

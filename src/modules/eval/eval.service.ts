@@ -12,9 +12,7 @@ export class EvalService {
   private readonly logger = new Logger(EvalService.name);
   private readonly docker: Docker;
 
-  constructor(
-    private readonly registryRunner: RegistryRunner
-  ) {
+  constructor(private readonly registryRunner: RegistryRunner) {
     this.docker = new Docker();
   }
 
@@ -37,13 +35,16 @@ export class EvalService {
           );
 
           if (result.stderr) {
-            this.logger.warn(`[STDERR] ${name}: ${result.stderr.slice(0, 200)}...`);
+            this.logger.warn(
+              `[STDERR] ${name}: ${result.stderr.slice(0, 200)}...`,
+            );
           }
 
           return result;
         } catch (error) {
           const duration = Date.now() - start;
-          const message = error instanceof Error ? error.message : String(error);
+          const message =
+            error instanceof Error ? error.message : String(error);
           this.logger.error(`[FAILED] ${name} | ${duration}ms | ${message}`);
           throw error;
         }
@@ -57,7 +58,8 @@ export class EvalService {
       if (res.status === 'fulfilled') {
         return { name: task.name, status: 'fulfilled', result: res.value };
       }
-      const message = res.reason instanceof Error ? res.reason.message : String(res.reason);
+      const message =
+        res.reason instanceof Error ? res.reason.message : String(res.reason);
       return { name: task.name, status: 'rejected', error: message };
     });
   }
@@ -81,11 +83,11 @@ export class EvalService {
         failed: testCases.length,
         total: testCases.length,
         results: [],
-        stderr: buildResult.logs?.join('') || buildResult.error || 'Build failed',
+        stderr:
+          buildResult.logs?.join('') || buildResult.error || 'Build failed',
         statusCode: -1,
         outputExceeded: false,
         timedOut: false,
-
       };
     }
 
@@ -129,20 +131,20 @@ export class EvalService {
         : [];
 
       const results = testCases.map((tc, index) => {
-        const actual = actualResult.find(r => r.index === index)
-        const actualValue = actual?.actual ?? ''
-        const isPassed = actualValue === tc.expected && !actual?.error
+        const actual = actualResult.find((r) => r.index === index);
+        const actualValue = actual?.actual ?? '';
+        const isPassed = actualValue === tc.expected && !actual?.error;
 
         return {
           index,
           passed: isPassed,
           actual: actualValue,
           expected: tc.expected,
-          error: actual?.error
+          error: actual?.error,
         };
-      })
+      });
 
-      const passed = results.filter(r => r.passed).length
+      const passed = results.filter((r) => r.passed).length;
 
       return {
         success: passed === testCases.length,
@@ -154,15 +156,19 @@ export class EvalService {
         statusCode: runResult.statusCode,
         outputExceeded: false,
         timedOut: false,
-      }
+      };
     } finally {
       await container.remove({ force: true }).catch(() => undefined);
-      await this.docker.getImage(tag).remove({ force: true }).catch(() => undefined);
+      await this.docker
+        .getImage(tag)
+        .remove({ force: true })
+        .catch(() => undefined);
     }
   }
 
-  private async createSandboxContainer(image: string): Promise<Docker.Container> {
-
+  private async createSandboxContainer(
+    image: string,
+  ): Promise<Docker.Container> {
     return this.docker.createContainer({
       Image: image,
       Tty: false,
@@ -182,12 +188,16 @@ export class EvalService {
     });
   }
 
-  private async runWithTimeout(container: Docker.Container, timeoutMs: number): Promise<RunResult> {
+  private async runWithTimeout(
+    container: Docker.Container,
+    timeoutMs: number,
+  ): Promise<RunResult> {
     await container.start();
 
     let timedOut = false;
 
-    const waitPromise = container.wait() as Promise<{ StatusCode: number }>; const timeoutPromise = new Promise<never>((_, rej) => {
+    const waitPromise = container.wait() as Promise<{ StatusCode: number }>;
+    const timeoutPromise = new Promise<never>((_, rej) => {
       setTimeout(() => {
         timedOut = true;
         void container.kill().catch(() => undefined);
@@ -204,7 +214,10 @@ export class EvalService {
     }
   }
 
-  private async collectLogs(container: Docker.Container, maxOutput: number): Promise<LogsResult> {
+  private async collectLogs(
+    container: Docker.Container,
+    maxOutput: number,
+  ): Promise<LogsResult> {
     const stdout = new PassThrough();
     const stderr = new PassThrough();
 
@@ -231,7 +244,11 @@ export class EvalService {
 
     let logStream: NodeJS.ReadableStream | null = null;
     try {
-      logStream = await container.logs({ stdout: true, stderr: true, follow: true });
+      logStream = await container.logs({
+        stdout: true,
+        stderr: true,
+        follow: true,
+      });
     } catch {
       logStream = null;
     }
@@ -239,8 +256,8 @@ export class EvalService {
     if (logStream) {
       this.docker.modem.demuxStream(logStream, stdout, stderr);
       await new Promise<void>((res) => {
-        logStream!.on('end', res);
-        logStream!.on('error', res);
+        logStream.on('end', res);
+        logStream.on('error', res);
       });
     }
 

@@ -8,7 +8,14 @@ import { TasksModule } from './modules/tasks/tasks.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
-  imports: [PrismaModule, EvalModule, RabbitMQModule, UsersModule, AuthModule, TasksModule],
+  imports: [
+    PrismaModule,
+    EvalModule,
+    RabbitMQModule,
+    UsersModule,
+    AuthModule,
+    TasksModule,
+  ],
   controllers: [AppController],
 })
-export class AppModule { }
+export class AppModule {}

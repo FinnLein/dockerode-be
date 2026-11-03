@@ -5,7 +5,7 @@ import { CreateTaskDto, UpdateTaskDto } from './dto';
 
 @Injectable()
 export class TasksRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   findAll() {
     return this.prisma.task.findMany({
