@@ -26,7 +26,7 @@
     "prisma:migrate:dev": "pnpm prisma migrate dev",
     "prisma:studio": "pnpm prisma studio",
     "prisma:reset": "pnpm prisma migrate reset",
-    "prisma:seed": "pnpm prisma db seed"
+    "prisma:seed": "pnpm prisma db seed",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
