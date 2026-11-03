@@ -1,0 +1,19 @@
+name: 'Setup Node + pnpm + Prisma'
+description: 'Setup node, install deps, generate prisma'
+
+runs:
+  using: 'composite'
+  steps:     
+    - run: corepack enable pnpm
+      shell: bash
+
+    - uses: actions/setup-node@v4
+      with: 
+        node-version-file: '.nvmrc'
+        cache: 'pnpm'
+      
+    - run: pnpm install --frozen-lockfile
+      shell: bash
+
+    - run: pnpm prisma:generate
+      shell: bash
