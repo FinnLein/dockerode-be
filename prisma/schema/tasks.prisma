@@ -1,6 +1,7 @@
 model Task {
   id String @id @default(uuid())
 
+  title       String   @unique
   language    String
   initialCode String
   testCases   String[]

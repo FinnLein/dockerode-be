@@ -1,6 +1,10 @@
 import { ArrayNotEmpty, IsArray, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateTaskDto {
+  @IsString({ message: 'Название должно быть строкой' })
+  @IsNotEmpty({ message: 'Название обязательно' })
+  title: string;
+
   @IsString({ message: 'Язык должен быть строкой' })
   @IsNotEmpty({ message: 'Язык обязателен' })
   language: string;

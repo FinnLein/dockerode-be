@@ -15,9 +15,10 @@ export async function seedTasks(prisma: PrismaClient, count = 20) {
   console.log('🌱 Seeding tasks...');
 
   const tasksData = Array.from({ length: count }).map(() => {
+    const title = faker.hacker.phrase(); 
+    
     const language = faker.helpers.arrayElement(LANGUAGES);
     const initialCode = CODE_TEMPLATES[language] || '// write code';
-    
 
     const testCasesCount = faker.number.int({ min: 2, max: 5 });
     const testCases = Array.from({ length: testCasesCount }).map(() => 
@@ -25,6 +26,7 @@ export async function seedTasks(prisma: PrismaClient, count = 20) {
     );
 
     return {
+      title, // <--- добавляем в объект
       language,
       initialCode,
       testCases,
