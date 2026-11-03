@@ -1,0 +1,12 @@
+model Task {
+  id String @id @default(uuid())
+
+  language    String
+  initialCode String
+  testCases   String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([language])
+}
