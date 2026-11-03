@@ -8,7 +8,7 @@
   "packageManager": "pnpm@10.32.1",
   "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -26,7 +26,8 @@
     "prisma:migrate:dev": "pnpm prisma migrate dev",
     "prisma:studio": "pnpm prisma studio",
     "prisma:reset": "pnpm prisma migrate reset",
-    "prisma:seed": "pnpm prisma db seed"
+    "prisma:seed": "pnpm prisma db seed",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@nestjs/common": "11.0.1",

@@ -1,6 +1,13 @@
 import { JsonValue } from '@shared/types/types';
 import { Type } from 'class-transformer';
-import { ArrayNotEmpty, IsArray, IsNotEmpty, IsObject, IsString, ValidateNested } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsNotEmpty,
+  IsObject,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 export class TestCaseDto {
   @IsString({ message: 'Input должен быть строкой' })
@@ -11,7 +18,6 @@ export class TestCaseDto {
   @IsNotEmpty({ message: 'Expected обязателен' })
   expected: string;
 }
-
 
 export class CreateTaskDto {
   @IsString({ message: 'Название должно быть строкой' })

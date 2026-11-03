@@ -2,9 +2,9 @@ import { TestCase } from '../eval.types';
 
 export class CheckSupportTaskDto {
   name: string;
-  language: string; 
+  language: string;
   code: string;
-  testCases: TestCase[]
+  testCases: TestCase[];
 }
 
 export class CheckSupportDto {
