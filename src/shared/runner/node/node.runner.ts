@@ -46,7 +46,8 @@ export class NodeRunner implements LanguageRunner {
 		try {
 			return JSON.parse(jsonPart);
 		} catch (error) {
-			return { error: 'Failed to parse results', raw: jsonPart };
+			const errorMessage = error instanceof Error ? error.message : String(error)
+			return { error: `Failed to parse results. ${errorMessage}`, raw: jsonPart };
 		}
 	}
 }

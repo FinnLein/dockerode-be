@@ -7,6 +7,13 @@ interface BuildResult {
   logs?: string[];
 }
 
+interface BuildProgressItem {
+  stream?: string;
+  error?: string;
+  errorDetail?: { message?: string };
+  aux?: unknown;
+}
+
 const buildImageFromTar = async (
   name: string,
   files: Record<string, string>,
@@ -25,10 +32,11 @@ const buildImageFromTar = async (
     docker.modem.followProgress(stream, (err, output) => {
       if (err) return rej(err);
 
+      const items = output as BuildProgressItem[]
       const logs: string[] = [];
       let buildError: string | undefined;
 
-      for (const item of output) {
+      for (const item of items) {
         if (item.stream) logs.push(item.stream);
         if (item.error) buildError = item.error;
       }
@@ -43,3 +51,4 @@ const buildImageFromTar = async (
 };
 
 export { buildImageFromTar };
+

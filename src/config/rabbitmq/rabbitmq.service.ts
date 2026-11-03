@@ -45,7 +45,7 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
 			if (rawMsg === null) return
 
 			try {
-				const content = JSON.parse(rawMsg.content.toString())
+				const content: unknown = JSON.parse(rawMsg.content.toString())
 
 				await handler(content)
 
