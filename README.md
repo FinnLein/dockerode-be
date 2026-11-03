@@ -1,98 +1,130 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Algorithm Learning Platform — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend API for my algorithm learning platform (LeetCode clone). Built with NestJS, Prisma, PostgreSQL, and JWT. Handles problem management, user authentication, and sandboxed code execution via Docker.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## ✨ Features
 
-## Description
+- **Authentication** — JWT-based auth with access/refresh tokens.
+- **Problem management** — CRUD for problems, test cases, and solutions.
+- **Sandboxed code execution** — user code runs inside isolated Docker containers.
+- **Multi-language runners** — pluggable runners for Node.js and Go.
+- **Submission tracking** — queue and evaluate submissions, store verdicts and runtime stats.
+- **Type-safe database access** — Prisma ORM on top of PostgreSQL.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🛠 Tech Stack
 
-## Project setup
+| Layer | Technology |
+|-------|------------|
+| Framework | [NestJS](https://nestjs.com/) |
+| Language | TypeScript |
+| ORM | [Prisma](https://www.prisma.io/) |
+| Database | PostgreSQL |
+| Auth | JWT (access + refresh) |
+| Code Execution | Docker (container isolation) |
+| Runners | Node.js, Go |
 
-```bash
-$ pnpm install
+## ⚙️ Architecture
+
+The project follows a modular NestJS structure, with each domain as a separate module.
+
+```
+src/
+├── auth/          # JWT strategy, guards, login/register
+├── users/         # User management
+├── problems/      # Problems, test cases
+├── submissions/   # Submission lifecycle, verdicts
+├── executor/      # Code execution orchestration
+│   ├── runners/   # Language-specific runners (node, go)
+│   └── sandbox/   # Docker container management
+├── prisma/        # Prisma service & module
+└── common/        # Guards, interceptors, filters, DTOs
 ```
 
-## Compile and run the project
+**Key principles:**
+- Each module owns its domain logic and exposes a clear service API.
+- Cross-cutting concerns (auth, validation, error handling) live in `common` and global guards/interceptors.
+- Code execution is fully decoupled from business logic via the `executor` module.
 
-```bash
-# development
-$ pnpm run start
+## 🐳 Code Execution & Sandboxing
 
-# watch mode
-$ pnpm run start:dev
+User code is never executed on the host. Each submission runs inside a fresh, isolated Docker container with:
 
-# production mode
-$ pnpm run start:prod
+- **Resource limits** — CPU, memory, and execution time limits to prevent abuse.
+- **No network access** — containers run with networking disabled.
+- **Read-only filesystem** — only a temp working directory is writable.
+- **Non-root user** — code runs as an unprivileged user inside the container.
+
+**Execution flow:**
+
+```
+Submission → Executor → Pick runner (Node / Go)
+          → Spin up container → Mount code + test cases
+          → Run & capture stdout/stderr
+          → Collect verdict + metrics → Tear down container
 ```
 
-## Run tests
+**Runners** are responsible for compiling (if needed), executing, and reporting results in a unified format, so adding a new language means adding a new runner without touching the core logic.
+
+## 🔐 Authentication
+
+- **Access token** — short-lived JWT for API requests.
+- **Refresh token** — long-lived, used to obtain new access tokens.
+- Protected routes use a JWT guard; roles and ownership checks are enforced per endpoint.
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (LTS)
+- PostgreSQL
+- Docker
+
+### Setup
 
 ```bash
-# unit tests
-$ pnpm run test
+# install dependencies
+npm install
 
-# e2e tests
-$ pnpm run test:e2e
+# configure environment
+cp .env.example .env
+# set DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, etc.
 
-# test coverage
-$ pnpm run test:cov
+# run database migrations
+npx prisma migrate dev
+
+# start dev server
+npm run start:dev
 ```
 
-## Deployment
+The API will be available at [http://localhost:3000](http://localhost:3000) (or your configured `PORT`).
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Environment variables
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | Secret for signing access tokens |
+| `JWT_REFRESH_SECRET` | Secret for signing refresh tokens |
+| `JWT_EXPIRES_IN` | Access token TTL |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh token TTL |
+| `DOCKER_HOST` | (optional) Docker daemon socket/host |
+
+## 🗄 Database
+
+Schema is managed with Prisma. Useful commands:
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+npx prisma migrate dev     # create & apply a migration
+npx prisma migrate deploy  # apply migrations (production)
+npx prisma studio          # open Prisma Studio
+npx prisma generate        # regenerate Prisma Client
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🧩 Adding a new language runner
 
-## Resources
+1. Create a new runner in `src/executor/runners/<language>`.
+2. Implement the shared `Runner` interface (compile, execute, parse result).
+3. Register it in the runner registry.
+4. Add a matching Docker image with the required runtime/toolchain.
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+No changes to the core execution flow are needed.
