@@ -73,7 +73,7 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
 			this.connection.on('close', () => {
 				this.logger.warn('RabbitMQ connection closed. Reconnecting in 5s...');
 
-				setTimeout(() => void this.connect(), 5000)
+				setTimeout(() => { void this.connect(); }, 5000)
 			})
 
 			this.connection.on('error', (err) => {
@@ -85,7 +85,7 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
 
 			this.logger.error(`Failed to connect to RabbitMQ: ${errorMessage}`);
 
-			setTimeout(() => void this.connect(), 5000)
+			setTimeout(() => { void this.connect(); }, 5000)
 		}
 	}
 
