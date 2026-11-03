@@ -2,6 +2,7 @@ import { Body, Controller, Logger, Param, Post, Sse } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { RabbitMQService } from 'src/config/rabbitmq/rabbitmq.service';
 import { CheckSupportDto } from './dto/check-support.dto';
+import { EvalResponseDto } from './dto/eval-response.dto';
 import { EvalDto } from './dto/eval.dto';
 import { EvalService } from './eval.service';
 import { SseService } from './sse.service';
@@ -15,14 +16,14 @@ export class EvalController {
     private readonly sseService: SseService,
     private readonly evalService: EvalService,
   ) { }
-  
+
   @Post('check')
   async checkSupport(@Body() dto: CheckSupportDto) {
     return this.evalService.checkSupport(dto);
   }
 
   @Post()
-  async eval(@Body() dto: EvalDto) {
+  async eval(@Body() dto: EvalDto): Promise<EvalResponseDto> {
     const { code, language, testCases } = dto;
 
     const jobId = crypto.randomUUID();

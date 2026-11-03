@@ -13,6 +13,8 @@ export class RegistryRunner {
 	) {
 		this.register('go', this.goRunner)
 		this.register('node', this.nodeRunner)
+		this.register('javascript', this.nodeRunner)
+		this.register('js', this.nodeRunner)
 	}
 
 	get(language: string): LanguageRunner {

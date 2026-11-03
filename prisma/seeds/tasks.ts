@@ -1,32 +1,37 @@
 import { faker } from '@faker-js/faker';
 import { PrismaClient } from '../../src/generated/prisma/client';
 
-const LANGUAGES = ['javascript', 'typescript', 'python', 'go', 'rust'];
+const LANGUAGES = ['javascript', 'go'];
 
 const CODE_TEMPLATES: Record<string, string> = {
   javascript: 'function solution(a, b) {\n  // Write your code here\n  return a + b;\n}',
-  typescript: 'function solution(a: number, b: number): number {\n  // Write your code here\n  return a + b;\n}',
-  python: 'def solution(a: int, b: int) -> int:\n    # Write your code here\n    return a + b',
-  go: 'package main\n\nfunc solution(a int, b int) int {\n    // Write your code here\n    return a + b\n}',
-  rust: 'fn solution(a: i32, b: i32) -> i32 {\n    // Write your code here\n    a + b\n}',
+  go: 'func solution(a int, b int) int {\n    // Write your code here\n    return a + b\n}',
 };
 
 export async function seedTasks(prisma: PrismaClient, count = 20) {
   console.log('🌱 Seeding tasks...');
 
   const tasksData = Array.from({ length: count }).map(() => {
-    const title = faker.hacker.phrase(); 
-    
+    const title = faker.hacker.phrase();
+    const description = faker.lorem.paragraph(); 
     const language = faker.helpers.arrayElement(LANGUAGES);
     const initialCode = CODE_TEMPLATES[language] || '// write code';
 
     const testCasesCount = faker.number.int({ min: 2, max: 5 });
-    const testCases = Array.from({ length: testCasesCount }).map(() => 
-      `assert(solution(${faker.number.int({ min: 1, max: 100 })}, ${faker.number.int({ min: 1, max: 100 })}))`
-    );
+
+    const testCases = Array.from({ length: testCasesCount }).map(() => {
+      const num1 = faker.number.int({ min: 1, max: 100 });
+      const num2 = faker.number.int({ min: 1, max: 100 });
+
+      return {
+        input: JSON.stringify([num1, num2]),
+        expected: `${num1 + num2}`,
+      };
+    });
 
     return {
-      title, // <--- добавляем в объект
+      title,
+      description,
       language,
       initialCode,
       testCases,

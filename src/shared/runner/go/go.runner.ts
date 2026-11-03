@@ -31,7 +31,7 @@ export class GoRunner implements LanguageRunner {
 
 	wrapCode(code: string, testCases: unknown[]): string {
 		const template = goTemplate
-		const serialized = JSON.stringify(JSON.stringify(testCases))
+		const serialized = JSON.stringify(testCases)
 
 		return template
 			.replace('__USER_CODE__', code)
@@ -48,10 +48,10 @@ export class GoRunner implements LanguageRunner {
 
 		const jsonPart = stdout.slice(markerIndex + marker.length).trim()
 
-		 try {
-    return JSON.parse(jsonPart);
-  } catch (error) {
-    return { error: 'Failed to parse results', raw: jsonPart };
-  }
+		try {
+			return JSON.parse(jsonPart);
+		} catch (error) {
+			return { error: 'Failed to parse results', raw: jsonPart };
+		}
 	}
 }
