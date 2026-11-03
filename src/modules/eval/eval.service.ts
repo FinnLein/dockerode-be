@@ -188,9 +188,9 @@ export class EvalService {
     let timedOut = false;
 
     const waitPromise = container.wait() as Promise<{ StatusCode: number }>; const timeoutPromise = new Promise<never>((_, rej) => {
-      setTimeout(async () => {
+      setTimeout(() => {
         timedOut = true;
-        await container.kill().catch(() => undefined);
+        void container.kill().catch(() => undefined);
         rej(new Error('Execution timeout'));
       }, timeoutMs);
     });

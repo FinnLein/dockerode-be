@@ -62,6 +62,15 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
 
 	}
 
+	private scheduleReconnect() {
+		setTimeout(() => {
+			this.connect().catch((error) => {
+				const msg = error instanceof Error ? error.message : String(error)
+				this.logger.error(`RabbitMQ reconnect failed: ${msg}`)
+			})
+		}, 5000)
+	}
+
 	private async connect() {
 		const url = process.env.RABBITMQ_URL || 'amqp://user:pass@localhost:5672'
 
@@ -73,7 +82,7 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
 			this.connection.on('close', () => {
 				this.logger.warn('RabbitMQ connection closed. Reconnecting in 5s...');
 
-				setTimeout(() => { void this.connect(); }, 5000)
+				this.scheduleReconnect()
 			})
 
 			this.connection.on('error', (err) => {
@@ -85,7 +94,7 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
 
 			this.logger.error(`Failed to connect to RabbitMQ: ${errorMessage}`);
 
-			setTimeout(() => { void this.connect(); }, 5000)
+			this.scheduleReconnect()
 		}
 	}
 
