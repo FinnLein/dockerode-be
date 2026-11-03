@@ -8,8 +8,8 @@ import { SseService } from './sse.service';
 export class EvalController {
   constructor(
     private readonly rabbitMQService: RabbitMQService,
-    private readonly sseService: SseService
-  ) { }
+    private readonly sseService: SseService,
+  ) {}
 
   @Post()
   async eval(@Body() body: { code: string }) {
@@ -24,13 +24,9 @@ export class EvalController {
   }
 
   @Sse(':jobId/stream')
-  async stream(
-    @Param('jobId') jobId: string
-  ) {
-    const subject = this.sseService.register(jobId)
+  async stream(@Param('jobId') jobId: string) {
+    const subject = this.sseService.register(jobId);
 
-    return subject.pipe(
-      finalize(() => this.sseService.remove(jobId))
-    )
+    return subject.pipe(finalize(() => this.sseService.remove(jobId)));
   }
 }

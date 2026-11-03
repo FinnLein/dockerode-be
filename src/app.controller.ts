@@ -3,11 +3,11 @@ import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly app: AppService) { }
+  constructor(private readonly app: AppService) {}
 
   @Post('health')
   healthCheck() {
-    return 'health'
+    return 'health';
   }
 
   @Post('build')
@@ -23,7 +23,7 @@ export class AppController {
   }
 
   @Post('run')
-  async run(@Body() body: { image: string, name: string }) {
+  async run(@Body() body: { image: string; name: string }) {
     return this.app.run(body);
   }
 
@@ -32,7 +32,4 @@ export class AppController {
     await this.app.stopContainer(id);
     return { id, status: 'stopped' };
   }
-
-
-
 }

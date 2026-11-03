@@ -9,4 +9,4 @@ import { EvalModule } from './modules/eval/eval.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}
