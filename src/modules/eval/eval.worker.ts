@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService } from 'src/config/rabbitmq/rabbitmq.service';
 import { EvalService } from 'src/modules/eval/eval.service';
+import { TestCase } from './eval.types';
 import { SseService } from './sse.service';
 
 @Injectable()
@@ -15,12 +16,21 @@ export class EvalWorker implements OnModuleInit {
 
   async onModuleInit() {
     await this.rabbitMQService.consume('code-eval', async (msg) => {
-      const { jobId, code } = msg as { jobId: string; code: string };
+      const { jobId, code, language, testCases } = msg as {
+        jobId: string;
+        code: string;
+        language: string;
+        testCases: TestCase[];
+      };
 
       this.logger.log(`Processing job ${jobId}`);
 
       try {
-        const result = await this.evalService.eval({ code });
+        const result = await this.evalService.eval({
+          code,
+          language,
+          testCases,
+        });
 
         this.logger.log(`Job ${jobId} finished: ${JSON.stringify(result)}`);
 

@@ -1,10 +1,23 @@
 import Docker from 'dockerode';
 import * as tar from 'tar-stream';
 
+interface BuildResult {
+  success: boolean;
+  error?: string;
+  logs?: string[];
+}
+
+interface BuildProgressItem {
+  stream?: string;
+  error?: string;
+  errorDetail?: { message?: string };
+  aux?: unknown;
+}
+
 const buildImageFromTar = async (
   name: string,
   files: Record<string, string>,
-) => {
+): Promise<BuildResult> => {
   const docker = new Docker();
   const pack = tar.pack();
 
@@ -18,17 +31,27 @@ const buildImageFromTar = async (
     { t: name },
   );
 
-  await new Promise<void>((res, rej) => {
+  return new Promise<BuildResult>((res, rej) => {
     docker.modem.followProgress(stream, (err, output) => {
       if (err) return rej(err);
-      const failed = output.find((i: any) => i.error);
-      if (failed?.error) return rej(new Error(failed.error));
 
-      res();
+      const items = output as BuildProgressItem[];
+      const logs: string[] = [];
+      let buildError: string | undefined;
+
+      for (const item of items) {
+        if (item.stream) logs.push(item.stream);
+        if (item.error) buildError = item.error;
+      }
+
+      if (buildError) {
+        return res({ success: false, error: buildError, logs });
+      }
+
+      res({ success: true, logs });
     });
   });
-
-  return name;
 };
 
 export { buildImageFromTar };
+

@@ -49,7 +49,7 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
       if (rawMsg === null) return;
 
       try {
-        const content = JSON.parse(rawMsg.content.toString());
+        const content: unknown = JSON.parse(rawMsg.content.toString());
 
         await handler(content);
 
@@ -63,9 +63,21 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
     });
   }
 
+  private tryReconnect() {
+    this.connect().catch((error) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`RabbitMQ reconnect failed: ${msg}`);
+    });
+  }
+
+  private scheduleReconnect() {
+    setTimeout(() => {
+      this.tryReconnect();
+    }, 5000);
+  }
+
   private async connect() {
-    const url =
-      process.env.RABBITMQ_URL || 'amqp://user:password@localhost:5672';
+    const url = process.env.RABBITMQ_URL || 'amqp://user:pass@localhost:5672';
 
     try {
       this.connection = await connect(url);
@@ -75,7 +87,7 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
       this.connection.on('close', () => {
         this.logger.warn('RabbitMQ connection closed. Reconnecting in 5s...');
 
-        setTimeout(() => this.connect(), 5000);
+        this.scheduleReconnect();
       });
 
       this.connection.on('error', (err) => {
@@ -87,7 +99,7 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
 
       this.logger.error(`Failed to connect to RabbitMQ: ${errorMessage}`);
 
-      setTimeout(() => this.connect(), 5000);
+      this.scheduleReconnect();
     }
   }
 }

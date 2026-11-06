@@ -1,9 +1,8 @@
 {
   "compilerOptions": {
     "strict": true,
-    "module": "preserve",
-    "moduleResolution": "bundler",
-    "resolvePackageJsonExports": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "isolatedModules": true,
     "declaration": true,
@@ -15,7 +14,8 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    "incremental": true,
+    "rootDir": "./src",
+    "incremental": false,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
@@ -24,8 +24,19 @@
     "noFallthroughCasesInSwitch": false,
     "strictPropertyInitialization": false,
     "resolveJsonModule": true,
-    "types": [
-      "node"
-    ]
-  }
+    "types": ["node"],
+
+    "paths": {
+      "@config": ["src/config/index.ts"],
+      "@config/*": ["src/config/*"],
+
+      "@modules": ["src/modules/index.ts"],
+      "@modules/*": ["src/modules/*"],
+
+      "@shared": ["src/shared/index.ts"],
+      "@shared/*": ["src/shared/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test"]
 }

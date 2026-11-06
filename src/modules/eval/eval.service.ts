@@ -1,51 +1,97 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { RegistryRunner } from '@shared/runner/registry.runner';
 import Docker from 'dockerode';
 import { buildImageFromTar } from 'src/shared/docker/utils/buildImageFromTar';
 import { PassThrough } from 'stream';
-
-interface EvalDto {
-  code: string;
-}
-
-interface RunResult {
-  statusCode: number;
-  timedOut: boolean;
-}
-
-interface LogsResult {
-  stdout: string;
-  stderr: string;
-  outputExceeded: boolean;
-}
+import { CheckSupportDto } from './dto/check-support.dto';
+import { EvalDto } from './dto/eval.dto';
+import { LogsResult, ParsedResult, RunResult, TestResult } from './eval.types';
 
 @Injectable()
 export class EvalService {
+  private readonly logger = new Logger(EvalService.name);
   private readonly docker: Docker;
 
-  constructor() {
+  constructor(private readonly registryRunner: RegistryRunner) {
     this.docker = new Docker();
   }
 
-  async eval(body: EvalDto) {
-    const { code } = body;
-    const tag = `runner-go:${Date.now()}`;
+  async checkSupport(dto: CheckSupportDto) {
+    this.logger.log(`Check-support: starting ${dto.tasks.length} tasks`);
 
-    const image = await buildImageFromTar(tag, {
-      Dockerfile: [
-        'FROM golang:1.24-alpine AS builder',
-        'WORKDIR /app',
-        'COPY main.go .',
-        'RUN CGO_ENABLED=0 go build -o /app/main main.go',
-        '',
-        'FROM alpine:3.20',
-        'WORKDIR /app',
-        'COPY --from=builder /app/main .',
-        'USER nobody',
-        'CMD ["/app/main"]',
-      ].join('\n'),
-      'main.go': code,
+    const results = await Promise.allSettled(
+      dto.tasks.map(async (task) => {
+        const { name, language, testCases, code } = task;
+        const start = Date.now();
+
+        this.logger.debug(`[START] ${name} (${language})`);
+
+        try {
+          const result = await this.eval({ language, code, testCases });
+          const duration = Date.now() - start;
+
+          this.logger.log(
+            `[DONE] ${name} | ${result.success ? 'OK' : 'FAIL'} | ${duration}ms | passed=${result.passed}/${result.total}`,
+          );
+
+          if (result.stderr) {
+            this.logger.warn(
+              `[STDERR] ${name}: ${result.stderr.slice(0, 200)}...`,
+            );
+          }
+
+          return result;
+        } catch (error) {
+          const duration = Date.now() - start;
+          const message =
+            error instanceof Error ? error.message : String(error);
+          this.logger.error(`[FAILED] ${name} | ${duration}ms | ${message}`);
+          throw error;
+        }
+      }),
+    );
+
+    this.logger.log(`Check-support: finished`);
+
+    return dto.tasks.map((task, index) => {
+      const res = results[index];
+      if (res.status === 'fulfilled') {
+        return { name: task.name, status: 'fulfilled', result: res.value };
+      }
+      const message =
+        res.reason instanceof Error ? res.reason.message : String(res.reason);
+      return { name: task.name, status: 'rejected', error: message };
     });
-    const container = await this.createSandboxContainer(image);
+  }
+
+  async eval(body: EvalDto): Promise<TestResult> {
+    const { code, language, testCases = [] } = body;
+
+    const runner = this.registryRunner.get(language);
+    const tag = `runner-${language}:${Date.now()}`;
+    const wrappedCode = runner.wrapCode(code, testCases);
+
+    const buildResult = await buildImageFromTar(tag, {
+      Dockerfile: runner.getDockerfile(),
+      [runner.getFileName()]: wrappedCode,
+    });
+
+    if (!buildResult.success) {
+      return {
+        success: false,
+        passed: 0,
+        failed: testCases.length,
+        total: testCases.length,
+        results: [],
+        stderr:
+          buildResult.logs?.join('') || buildResult.error || 'Build failed',
+        statusCode: -1,
+        outputExceeded: false,
+        timedOut: false,
+      };
+    }
+
+    const container = await this.createSandboxContainer(tag);
 
     try {
       const runResult = await this.runWithTimeout(container, 5000);
@@ -53,7 +99,11 @@ export class EvalService {
 
       if (logsResult.outputExceeded) {
         return {
-          stdout: '',
+          success: false,
+          passed: 0,
+          failed: testCases.length,
+          total: testCases.length,
+          results: [],
           stderr: 'Output limit exceeded',
           statusCode: -1,
           outputExceeded: true,
@@ -63,7 +113,11 @@ export class EvalService {
 
       if (runResult.timedOut) {
         return {
-          stdout: logsResult.stdout,
+          success: false,
+          passed: 0,
+          failed: testCases.length,
+          total: testCases.length,
+          results: [],
           stderr: logsResult.stderr,
           statusCode: -1,
           outputExceeded: false,
@@ -71,8 +125,33 @@ export class EvalService {
         };
       }
 
+      const parsedResult = runner.parseResult(logsResult.stdout);
+      const actualResult: ParsedResult[] = Array.isArray(parsedResult)
+        ? (parsedResult as ParsedResult[])
+        : [];
+
+      const results = testCases.map((tc, index) => {
+        const actual = actualResult.find((r) => r.index === index);
+        const actualValue = actual?.actual ?? '';
+        const isPassed = actualValue === tc.expected && !actual?.error;
+
+        return {
+          index,
+          passed: isPassed,
+          actual: actualValue,
+          expected: tc.expected,
+          error: actual?.error,
+        };
+      });
+
+      const passed = results.filter((r) => r.passed).length;
+
       return {
-        stdout: logsResult.stdout,
+        success: passed === testCases.length,
+        passed,
+        failed: testCases.length - passed,
+        total: testCases.length,
+        results,
         stderr: logsResult.stderr,
         statusCode: runResult.statusCode,
         outputExceeded: false,
@@ -81,7 +160,7 @@ export class EvalService {
     } finally {
       await container.remove({ force: true }).catch(() => undefined);
       await this.docker
-        .getImage(image)
+        .getImage(tag)
         .remove({ force: true })
         .catch(() => undefined);
     }
@@ -94,6 +173,7 @@ export class EvalService {
       Image: image,
       Tty: false,
       HostConfig: {
+        AutoRemove: true,
         CapDrop: ['ALL'],
         SecurityOpt: ['no-new-privileges'],
         Memory: 128 * 1024 * 1024,
@@ -116,11 +196,11 @@ export class EvalService {
 
     let timedOut = false;
 
-    const waitPromise = container.wait();
+    const waitPromise = container.wait() as Promise<{ StatusCode: number }>;
     const timeoutPromise = new Promise<never>((_, rej) => {
-      setTimeout(async () => {
+      setTimeout(() => {
         timedOut = true;
-        await container.kill().catch(() => undefined);
+        void container.kill().catch(() => undefined);
         rej(new Error('Execution timeout'));
       }, timeoutMs);
     });
