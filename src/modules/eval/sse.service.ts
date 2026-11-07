@@ -21,9 +21,9 @@ export class SseService {
     this.streams.set(jobId, subject);
 
     return new Observable<MessageEvent>((subscriber) => {
-      const sub = subject.subscribe(subscriber);
+      const id = subject.subscribe(subscriber);
       return () => {
-        sub.unsubscribe();
+        id.unsubscribe();
         this.remove(jobId);
       };
     });
