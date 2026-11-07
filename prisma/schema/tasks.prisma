@@ -1,14 +1,32 @@
+enum Language {
+  javascript
+  golang
+}
+
 model Task {
   id String @id @default(uuid())
 
-  title       String   @unique
+  title       String               @unique
   description Json
-  language    String
-  initialCode String
+  language    Language[]
+  initialCode LanugageInitalCode[]
   testCases   Json
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([language])
+}
+
+model LanugageInitalCode {
+  id     String @id @default(uuid())
+  
+  taskId String
+
+  language Language
+  template String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, language])
 }

@@ -3,11 +3,13 @@ import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
+  IsEnum,
   IsNotEmpty,
   IsObject,
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { Language } from 'src/generated/prisma/enums';
 
 export class TestCaseDto {
   @IsString({ message: 'Input должен быть строкой' })
@@ -19,6 +21,16 @@ export class TestCaseDto {
   expected: string;
 }
 
+export class InitialCodeDto {
+  @IsEnum(Language, { message: 'Недопустимый язык программирования' })
+  @IsNotEmpty({ message: 'Язык обязателен' })
+  language: Language;
+
+  @IsString({ message: 'Шаблон кода должен быть строкой' })
+  @IsNotEmpty({ message: 'Шаблон кода обязателен' })
+  template: string;
+}
+
 export class CreateTaskDto {
   @IsString({ message: 'Название должно быть строкой' })
   @IsNotEmpty({ message: 'Название обязательно' })
@@ -28,13 +40,16 @@ export class CreateTaskDto {
   @IsNotEmpty({ message: 'Описание обязательно' })
   description: JsonValue;
 
-  @IsString({ message: 'Язык должен быть строкой' })
-  @IsNotEmpty({ message: 'Язык обязателен' })
-  language: string;
+  @IsArray({ message: 'Язык должен быть массивом' })
+  @ArrayNotEmpty({ message: 'Укажите хотя бы один язык' })
+  @IsEnum(Language, { each: true, message: 'Недопустимый язык программирования' })
+  language: Language[];
 
-  @IsString({ message: 'Начальный код должен быть строкой' })
-  @IsNotEmpty({ message: 'Начальный код обязателен' })
-  initialCode: string;
+  @IsArray({ message: 'Начальные коды должны быть массивом' })
+  @ArrayNotEmpty({ message: 'Добавьте хотя бы один начальный код' })
+  @ValidateNested({ each: true })
+  @Type(() => InitialCodeDto)
+  initialCode: InitialCodeDto[];
 
   @IsArray({ message: 'Тест-кейсы должны быть массивом' })
   @ArrayNotEmpty({ message: 'Добавьте хотя бы один тест-кейс' })

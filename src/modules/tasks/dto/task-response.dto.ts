@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Language } from 'src/generated/prisma/enums';
 import { TestCaseDto } from './create.dto';
 
 export class TaskResponseDto {
@@ -9,13 +10,17 @@ export class TaskResponseDto {
   title: string;
 
   @ApiProperty({
-    example: { markdown: '## Описание\nТекст задачи' },
-    description: 'JSON-объект с описанием (markdown)',
+    example: { html: '<h2>Описание</h2><p>Текст задачи</p>' },
+    description: 'JSON-объект с описанием (html)',
   })
   description: Record<string, unknown>;
 
-  @ApiProperty({ example: 'typescript' })
-  language: string;
+  @ApiProperty({ 
+    example: ['typescript', 'javascript'], 
+    enum: Language, 
+    isArray: true 
+  })
+  language: Language[];
 
   @ApiProperty({ example: 'function solve() {}' })
   initialCode: string;
