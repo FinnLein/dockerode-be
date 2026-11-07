@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseArrayPipe,
   Patch,
   Post,
 } from '@nestjs/common';
@@ -15,7 +16,7 @@ import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 @ApiTags('tasks')
 @Controller('tasks')
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(private readonly tasksService: TasksService) { }
 
   @Get()
   @ApiOkResponse({ type: [TaskResponseDto] })
@@ -35,6 +36,15 @@ export class TasksController {
     return this.tasksService.create(dto);
   }
 
+  @Post('bulk')
+  @ApiCreatedResponse({ description: 'Количество созданных задач' })
+  createBulk(
+    @Body(new ParseArrayPipe({ items: CreateTaskDto }))
+    dtos: CreateTaskDto[],
+  ) {
+    return this.tasksService.createBulk(dtos);
+  }
+
   @Patch(':id')
   @ApiOkResponse({ type: TaskResponseDto })
   update(@Param('id') id: string, @Body() dto: UpdateTaskDto) {
@@ -43,7 +53,12 @@ export class TasksController {
 
   @Delete(':id')
   @ApiOkResponse({ type: TaskResponseDto })
-  remove(@Param('id') id: string) {
-    return this.tasksService.remove(id);
+  delete(@Param('id') id: string) {
+    return this.tasksService.delete(id);
+  }
+
+  @Delete()
+  deleteBulk() {
+    return this.tasksService.deleteBulk()
   }
 }

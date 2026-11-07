@@ -26,7 +26,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    // findById тоже должен быть типизирован, чтобы возвращать User | null, а не Promise<any>
     const user = await this.usersService.findById(payload.id);
     if (!user) {
       throw new UnauthorizedException('Пользователь не найден');
