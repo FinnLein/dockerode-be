@@ -1,11 +1,12 @@
 import { faker } from '@faker-js/faker';
 import { PrismaClient } from '../../src/generated/prisma/client';
 
-const LANGUAGES = ['javascript', 'golang'] as const;
+const LANGUAGES = ['javascript', 'golang', 'python'] as const;
 
 const CODE_TEMPLATES: Record<string, string> = {
   javascript: 'function solution(a, b) {\n  // Write your code here\n  return a + b;\n}',
   golang: 'func solution(a int, b int) int {\n    // Write your code here\n    return a + b\n}',
+  python: 'def solution(a, b):\n    # Write your code here\n    return a + b',
 };
 
 export async function seedTasks(prisma: PrismaClient, count = 20) {
@@ -13,7 +14,7 @@ export async function seedTasks(prisma: PrismaClient, count = 20) {
 
   const tasksData = Array.from({ length: count }).map(() => {
     const title = faker.hacker.phrase();
-    const description = JSON.stringify({ html: `<p>${faker.lorem.paragraph()}</p>` });
+    const description = { html: `<p>${faker.lorem.paragraph()}</p>` };
 
     const testCasesCount = faker.number.int({ min: 2, max: 5 });
 

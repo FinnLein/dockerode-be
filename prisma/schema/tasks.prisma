@@ -1,6 +1,7 @@
 enum Language {
   javascript
   golang
+  python
 }
 
 model Task {
