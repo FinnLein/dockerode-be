@@ -13,6 +13,7 @@ export class SseService {
       this.cleanup(jobId);
       return new Observable<MessageEvent>((subscriber) => {
         subscriber.next({ data: cachedResult as object });
+        subject.next({ type: 'done', data: {} });
         subscriber.complete();
       });
     }
@@ -35,6 +36,7 @@ export class SseService {
     const subject = this.streams.get(jobId);
     if (subject) {
       subject.next({ data: data as object });
+      subject.next({ type: 'done', data: {} });
       subject.complete();
       this.streams.delete(jobId);
     }
