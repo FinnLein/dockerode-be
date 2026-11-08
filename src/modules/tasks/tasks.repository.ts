@@ -38,21 +38,25 @@ export class TasksRepository {
     });
   }
 
-  createBulk(dtos: CreateTaskDto[]) {
-    return this.prisma.task.createMany({
-      data: dtos.map((dto) => ({
-        ...dto,
-        description: dto.description as unknown as Prisma.InputJsonValue,
-        testCases: dto.testCases as unknown as Prisma.InputJsonValue,
-        initialCode: {
-          create: dto.initialCode.map(item => ({
-            language: item.language,
-            template: item.template
-          }))
-        }
-      })),
-      skipDuplicates: true,
-    })
+  async createBulk(dtos: CreateTaskDto[]) {
+    return this.prisma.$transaction(
+      dtos.map((dto) =>
+        this.prisma.task.create({
+          data: {
+            title: dto.title,
+            description: dto.description as Prisma.InputJsonValue,
+            language: dto.language,
+            testCases: dto.testCases as unknown as Prisma.InputJsonValue,
+            initialCode: {
+              create: dto.initialCode.map(item => ({
+                language: item.language,
+                template: item.template
+              }))
+            }
+          }
+        })
+      )
+    );
   }
 
   update(id: string, dto: UpdateTaskDto) {
@@ -69,7 +73,7 @@ export class TasksRepository {
           }))
         }
       },
-      include: {initialCode: true}
+      include: { initialCode: true }
     });
   }
 

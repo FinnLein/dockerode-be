@@ -2,6 +2,14 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Language } from 'src/generated/prisma/enums';
 import { TestCaseDto } from './create.dto';
 
+export class InitialCodeResponseDto {
+  @ApiProperty({ example: 'javascript', enum: Language })
+  language: Language;
+
+  @ApiProperty({ example: 'function solve() {}' })
+  template: string;
+}
+
 export class TaskResponseDto {
   @ApiProperty({ example: 'a1b2c3d4-...' })
   id: string;
@@ -22,8 +30,8 @@ export class TaskResponseDto {
   })
   language: Language[];
 
-  @ApiProperty({ example: 'function solve() {}' })
-  initialCode: string;
+  @ApiProperty({ type: () => [InitialCodeResponseDto] })
+  initialCode: InitialCodeResponseDto[];
 
   @ApiProperty({ type: () => [TestCaseDto] })
   testCases: TestCaseDto[];
