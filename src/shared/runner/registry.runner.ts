@@ -11,6 +11,7 @@ export class RegistryRunner {
     private readonly goRunner: GoRunner,
     private readonly nodeRunner: NodeRunner,
   ) {
+    this.register('golang', this.goRunner);
     this.register('go', this.goRunner);
     this.register('node', this.nodeRunner);
     this.register('javascript', this.nodeRunner);
