@@ -255,7 +255,8 @@ export class EvalService {
         follow: true,
       });
     } catch (e) {
-      this.logger.error(`container.logs failed: ${e instanceof Error ? e.message : e}`);
+      const errorMessage = e instanceof Error ? e.message : String(e)
+      this.logger.error(`container.logs failed: ${errorMessage}`);
       logStream = null;
     }
 
