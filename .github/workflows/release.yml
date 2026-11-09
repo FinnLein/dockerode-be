@@ -8,6 +8,8 @@ on:
 permissions:
   contents: write
   packages: write
+  issues: write
+  pull-requests: write
 
 jobs:
   releasing:
@@ -21,30 +23,14 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup  
 
-      - name: Get next version
-        id: get_version
-        run: |
-          NEXT_VERSION=$(pnpm dlx semantic-release --dry-run 2>&1 | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+' || echo "")
-
-          if [ -z "$NEXT_VERSION" ]; then 
-            echo "Нет коммитов для релиза"
-            echo "version=" >> $GITHUB_OUTPUT
-          else
-            echo "Следующая версия: v$NEXT_VERSION"
-            echo "version=v$NEXT_VERSION" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Creating Tag
-        if: steps.get_version.outputs.version != ''
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ steps.get_version.outputs.version }}
-          git push origin ${{ steps.get_version.outputs.version }}
+      - name: Semantic release
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm exec semantic-release
        
-
       - name: Login to GHCR
-        if: steps.get_version.outputs.version != ''
+        if: steps.release.outputs.version != ''
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -52,16 +38,16 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
-        if: steps.get_version.outputs.version != ''
+        if: steps.release.outputs.version != ''
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=${{ steps.get_version.outputs.version }}
+            type=raw,value=${{ steps.release.outputs.version }}
 
       - name: Build and push
-        if: steps.get_version.outputs.version != ''
+        if: steps.release.outputs.version != ''
         uses: docker/build-push-action@v6
         with:
           context: . 
