@@ -158,11 +158,16 @@ export class EvalService {
         timedOut: false,
       };
     } finally {
-      await container.remove({ force: true }).catch(() => undefined);
+      await container.remove({ force: true })
+        .catch(() => undefined);
       await this.docker
         .getImage(tag)
         .remove({ force: true })
         .catch(() => undefined);
+      await this.docker
+        .pruneImages({ filters: { dangling: ['true'], until: ['10m'] } })
+        .catch(() => undefined);
+
     }
   }
 
@@ -173,7 +178,7 @@ export class EvalService {
       Image: image,
       Tty: false,
       HostConfig: {
-        AutoRemove: true,
+        AutoRemove: false,
         CapDrop: ['ALL'],
         SecurityOpt: ['no-new-privileges'],
         Memory: 128 * 1024 * 1024,
@@ -249,7 +254,9 @@ export class EvalService {
         stderr: true,
         follow: true,
       });
-    } catch {
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e)
+      this.logger.error(`container.logs failed: ${errorMessage}`);
       logStream = null;
     }
 

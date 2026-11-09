@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 
 interface UserData {
@@ -9,6 +9,16 @@ interface UserData {
 @Injectable()
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
+
+  async getProfile(id: string) {
+    const user = await this.usersRepository.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    return user;
+  }
 
   findById(id: string) {
     return this.usersRepository.findById(id);

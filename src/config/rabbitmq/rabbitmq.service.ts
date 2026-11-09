@@ -4,7 +4,7 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import { Channel, ChannelModel, connect } from 'amqplib';
+import { Channel, ChannelModel, connect, ConsumeMessage } from 'amqplib';
 
 @Injectable()
 export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
@@ -41,26 +41,32 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
       throw new Error('RabbitMQ channel is not initialized');
     }
 
-    await this.channel?.assertQueue(queue, { durable: true });
-
+    await this.channel.assertQueue(queue, { durable: true });
     await this.channel.prefetch(1);
 
-    await this.channel.consume(queue, async (rawMsg) => {
+    await this.channel.consume(queue, (rawMsg) => {
       if (rawMsg === null) return;
 
-      try {
-        const content: unknown = JSON.parse(rawMsg.content.toString());
-
-        await handler(content);
-
-        this.channel?.ack(rawMsg);
-      } catch (error) {
-        const msg = error instanceof Error ? error.message : String(error);
-        this.logger.error(`Message processing failed: ${msg}`);
-
-        this.channel?.nack(rawMsg, false, false);
-      }
+      void this.processMessage(rawMsg, handler);
     });
+  }
+
+  private async processMessage(
+    rawMsg: ConsumeMessage,
+    handler: (msg: unknown) => Promise<void>,
+  ) {
+    try {
+      const content: unknown = JSON.parse(rawMsg.content.toString());
+
+      await handler(content);
+
+      this.channel?.ack(rawMsg);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Message processing failed: ${msg}`);
+
+      this.channel?.nack(rawMsg, false, false);
+    }
   }
 
   private tryReconnect() {

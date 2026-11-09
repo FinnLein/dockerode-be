@@ -13,6 +13,7 @@ export class SseService {
       this.cleanup(jobId);
       return new Observable<MessageEvent>((subscriber) => {
         subscriber.next({ data: cachedResult as object });
+        subject.next({ type: 'done', data: {} });
         subscriber.complete();
       });
     }
@@ -21,9 +22,9 @@ export class SseService {
     this.streams.set(jobId, subject);
 
     return new Observable<MessageEvent>((subscriber) => {
-      const sub = subject.subscribe(subscriber);
+      const id = subject.subscribe(subscriber);
       return () => {
-        sub.unsubscribe();
+        id.unsubscribe();
         this.remove(jobId);
       };
     });
@@ -35,6 +36,7 @@ export class SseService {
     const subject = this.streams.get(jobId);
     if (subject) {
       subject.next({ data: data as object });
+      subject.next({ type: 'done', data: {} });
       subject.complete();
       this.streams.delete(jobId);
     }

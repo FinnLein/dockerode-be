@@ -24,7 +24,7 @@
     "noFallthroughCasesInSwitch": false,
     "strictPropertyInitialization": false,
     "resolveJsonModule": true,
-    "types": ["node"],
+    "types": ["node", "express"],
 
     "paths": {
       "@config": ["src/config/index.ts"],
