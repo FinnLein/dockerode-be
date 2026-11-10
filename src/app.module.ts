@@ -1,3 +1,4 @@
+import { YjsModule } from '@modules/yjs/yjs.module';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { PrismaModule } from './config/prisma/prisma.module';
@@ -15,6 +16,7 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
     AuthModule,
     TasksModule,
+    YjsModule
   ],
   controllers: [AppController],
 })

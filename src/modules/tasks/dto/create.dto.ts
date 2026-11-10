@@ -1,4 +1,4 @@
-import { JsonValue } from '@shared/types/types';
+import type { JsonValue } from '@shared/types/types';
 import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
