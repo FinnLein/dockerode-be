@@ -46,7 +46,7 @@ export const goTemplate = [
   '}',
   '',
   'func main() {',
-  '  testCasesJSON := `__TEST_CASES__`', 
+  '  testCasesJSON := `__TEST_CASES__`',
   '  var testCases []TestCase',
   '  if err := json.Unmarshal([]byte(testCasesJSON), &testCases); err != nil {',
   '    fmt.Fprintf(os.Stderr, "Failed to parse test cases: %v\\n", err)',

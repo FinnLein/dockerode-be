@@ -11,14 +11,14 @@ export class RegistryRunner {
   constructor(
     private readonly goRunner: GoRunner,
     private readonly nodeRunner: NodeRunner,
-    private readonly pythonRunner: PythonRunner
+    private readonly pythonRunner: PythonRunner,
   ) {
     this.register('golang', this.goRunner);
     this.register('go', this.goRunner);
     this.register('node', this.nodeRunner);
     this.register('javascript', this.nodeRunner);
     this.register('js', this.nodeRunner);
-    this.register('python', this.pythonRunner)
+    this.register('python', this.pythonRunner);
   }
 
   get(language: string): LanguageRunner {

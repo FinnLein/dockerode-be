@@ -23,10 +23,10 @@ export class TaskResponseDto {
   })
   description: Record<string, unknown>;
 
-  @ApiProperty({ 
-    example: ['typescript', 'javascript'], 
-    enum: Language, 
-    isArray: true 
+  @ApiProperty({
+    example: ['typescript', 'javascript'],
+    enum: Language,
+    isArray: true,
   })
   language: Language[];
 

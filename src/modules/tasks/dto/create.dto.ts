@@ -42,7 +42,10 @@ export class CreateTaskDto {
 
   @IsArray({ message: 'Язык должен быть массивом' })
   @ArrayNotEmpty({ message: 'Укажите хотя бы один язык' })
-  @IsEnum(Language, { each: true, message: 'Недопустимый язык программирования' })
+  @IsEnum(Language, {
+    each: true,
+    message: 'Недопустимый язык программирования',
+  })
   language: Language[];
 
   @IsArray({ message: 'Начальные коды должны быть массивом' })
