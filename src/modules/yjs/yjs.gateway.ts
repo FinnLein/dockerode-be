@@ -3,7 +3,7 @@ import { setupWSConnection } from '@y/websocket-server/utils';
 import { Request } from 'express';
 import { WebSocket } from 'ws';
 
-@WebSocketGateway(5001)
+@WebSocketGateway()
 export class YjsGateway implements OnGatewayConnection {
 	handleConnection(connection: WebSocket, request: Request) {
 		const requestUrl = new URL(request.url!, `http://${request.headers.host}`);
