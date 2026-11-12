@@ -8,4 +8,4 @@ import { RegistryRunner } from './registry.runner';
   providers: [RegistryRunner, NodeRunner, GoRunner, PythonRunner],
   exports: [RegistryRunner],
 })
-export class RunnerModule { }
+export class RunnerModule {}

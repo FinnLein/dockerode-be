@@ -158,8 +158,7 @@ export class EvalService {
         timedOut: false,
       };
     } finally {
-      await container.remove({ force: true })
-        .catch(() => undefined);
+      await container.remove({ force: true }).catch(() => undefined);
       await this.docker
         .getImage(tag)
         .remove({ force: true })
@@ -167,7 +166,6 @@ export class EvalService {
       await this.docker
         .pruneImages({ filters: { dangling: ['true'], until: ['10m'] } })
         .catch(() => undefined);
-
     }
   }
 
@@ -255,7 +253,7 @@ export class EvalService {
         follow: true,
       });
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : String(e)
+      const errorMessage = e instanceof Error ? e.message : String(e);
       this.logger.error(`container.logs failed: ${errorMessage}`);
       logStream = null;
     }

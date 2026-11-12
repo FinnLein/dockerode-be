@@ -1,3 +1,4 @@
+import { YjsModule } from '@modules/yjs/yjs.module';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { PrismaModule } from './config/prisma/prisma.module';
@@ -6,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { EvalModule } from './modules/eval/eval.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { UsersModule } from './modules/users/users.module';
+import { RoomsModule } from './modules/rooms/rooms.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
     AuthModule,
     TasksModule,
+    YjsModule,
+    RoomsModule,
   ],
   controllers: [AppController],
 })
