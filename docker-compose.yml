@@ -3,6 +3,7 @@ services:
     build:
       context: .
       target: development
+    restart: unless-stopped
     ports:
       - '5000:5000'
     volumes:
@@ -14,15 +15,19 @@ services:
       - CHOKIDAR_INTERVAL=300
       - RABBITMQ_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@${RABBIT_HOST}:${RABBIT_PORT}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
     command: pnpm run dev
     depends_on:
       rabbit:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
   rabbit:
     image: rabbitmq:4-management
+    restart: unless-stopped
     ports:
       - '5672:5672'
       - '15672:15672'
@@ -37,6 +42,7 @@ services:
 
   postgres:
     image: postgres:18.6-alpine
+    restart: unless-stopped
     ports:
       - '5433:5432'
     environment:
@@ -51,5 +57,20 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
 
+  redis:
+    image: redis:8.8.4-alpine3.23
+    restart: unless-stopped
+    command: ['redis-server', '--requirepass', '${REDIS_PASSWORD}']
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+
 volumes:
   postgres_data:
+  redis_data:

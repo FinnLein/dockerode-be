@@ -1,66 +1,66 @@
 import { Injectable, MessageEvent } from '@nestjs/common';
-import { Observable, Subject } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
+import { EvalStreamEvent } from './types/stream.types';
 
 @Injectable()
 export class SseService {
-  private readonly streams = new Map<string, Subject<MessageEvent>>();
-  private readonly results = new Map<string, unknown>();
-  private readonly cleanupTimers = new Map<string, NodeJS.Timeout>();
+  private readonly BUFFER = 5;
 
-  register(jobId: string): Observable<MessageEvent> {
-    const cachedResult = this.results.get(jobId);
-    if (cachedResult !== undefined) {
-      this.cleanup(jobId);
-      return new Observable<MessageEvent>((subscriber) => {
-        subscriber.next({ data: cachedResult as object });
-        subject.next({ type: 'done', data: {} });
-        subscriber.complete();
-      });
-    }
+  private readonly subjects = new Map<string, ReplaySubject<MessageEvent>>();
+  private readonly clearTimeouts = new Map<string, NodeJS.Timeout>();
 
-    const subject = new Subject<MessageEvent>();
-    this.streams.set(jobId, subject);
-
+  subscribe(id: string): Observable<MessageEvent> {
     return new Observable<MessageEvent>((subscriber) => {
-      const id = subject.subscribe(subscriber);
+      let subject = this.subjects.get(id);
+
+      if (!subject) {
+        subject = new ReplaySubject<MessageEvent>(this.BUFFER);
+        this.subjects.set(id, subject);
+      }
+
+      const sub = subject.subscribe(subscriber);
+
       return () => {
-        id.unsubscribe();
-        this.remove(jobId);
+        sub.unsubscribe();
+        if (!subject.observed && this.subjects.get(id) === subject) {
+          this.subjects.delete(id);
+          const t = this.clearTimeouts.get(id);
+          if (t) {
+            clearTimeout(t);
+            this.clearTimeouts.delete(id);
+          }
+        }
       };
     });
   }
 
-  emit(jobId: string, data: unknown): void {
-    this.results.set(jobId, data);
+  publish(id: string, event: { data: EvalStreamEvent }): void {
+    let subject = this.subjects.get(id);
 
-    const subject = this.streams.get(jobId);
-    if (subject) {
-      subject.next({ data: data as object });
-      subject.next({ type: 'done', data: {} });
-      subject.complete();
-      this.streams.delete(jobId);
+    if (!subject) {
+      subject = new ReplaySubject<MessageEvent>(this.BUFFER);
+      this.subjects.set(id, subject);
     }
 
-    const timer = setTimeout(() => this.cleanup(jobId), 30_000);
-    this.cleanupTimers.set(jobId, timer);
-  }
+    subject.next(event);
 
-  private cleanup(jobId: string): void {
-    this.results.delete(jobId);
-    this.streams.delete(jobId);
+    const isFinished = event.data.type === 'run_finished';
+    const isFailed = event.data.type === 'run_failed';
 
-    const timer = this.cleanupTimers.get(jobId);
-    if (timer) {
-      clearTimeout(timer);
-      this.cleanupTimers.delete(jobId);
-    }
-  }
-
-  remove(jobId: string): void {
-    const subject = this.streams.get(jobId);
-    if (subject) {
+    if (isFinished || isFailed) {
       subject.complete();
-      this.streams.delete(jobId);
+
+      const existing = this.clearTimeouts.get(id);
+      if (existing) clearTimeout(existing);
+
+      const timeoutId = setTimeout(() => {
+        if (this.subjects.get(id) === subject) {
+          this.subjects.delete(id);
+        }
+        this.clearTimeouts.delete(id);
+      }, 30_000);
+
+      this.clearTimeouts.set(id, timeoutId);
     }
   }
 }
