@@ -7,4 +7,8 @@ export class CreateRoomDto {
   @IsString()
   @IsOptional()
   initialCode?: string;
+
+  @IsString()
+  @IsOptional()
+  language?: string;
 }
