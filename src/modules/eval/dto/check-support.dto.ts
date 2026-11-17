@@ -1,4 +1,4 @@
-import { TestCase } from '../eval.types';
+import { TestCase } from '../types/eval.types';
 
 export class CheckSupportTaskDto {
   name: string;

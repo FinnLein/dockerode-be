@@ -1,14 +1,19 @@
 import { Module } from '@nestjs/common';
-import { RunnerModule } from '@shared/runner/runner.module';
+import { CodeRunnerModule } from './code-runner/code-runner.module';
+import { EvalCollabModule } from './collab/eval-collab.module';
 import { EvalController } from './eval.controller';
 import { EvalService } from './eval.service';
 import { EvalWorker } from './eval.worker';
 import { SseService } from './sse.service';
 
 @Module({
-  imports: [RunnerModule],
+  imports: [CodeRunnerModule, EvalCollabModule],
   controllers: [EvalController],
-  providers: [EvalService, EvalWorker, SseService],
+  providers: [
+    EvalService,
+    EvalWorker,
+    SseService,
+  ],
   exports: [EvalService],
 })
-export class EvalModule {}
+export class EvalModule { }

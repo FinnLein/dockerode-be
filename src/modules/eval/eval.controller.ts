@@ -1,6 +1,6 @@
-import { Body, Controller, Logger, Param, Post, Sse } from '@nestjs/common';
-import * as crypto from 'crypto';
-import { RabbitMQService } from 'src/config/rabbitmq/rabbitmq.service';
+import { Body, Controller, Logger, Param, ParseUUIDPipe, Post, Sse, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '@shared/auth/guards/jwt-auth.guard';
+import { CurrentUser } from '@shared/decorators/current-user.decorator';
 import { CheckSupportDto } from './dto/check-support.dto';
 import { EvalResponseDto } from './dto/eval-response.dto';
 import { EvalDto } from './dto/eval.dto';
@@ -12,38 +12,28 @@ export class EvalController {
   private readonly logger = new Logger(EvalController.name);
 
   constructor(
-    private readonly rabbitMQService: RabbitMQService,
-    private readonly sseService: SseService,
     private readonly evalService: EvalService,
-  ) {}
+    private readonly sseService: SseService,
+  ) { }
 
   @Post('check')
   async checkSupport(@Body() dto: CheckSupportDto) {
     return this.evalService.checkSupport(dto);
   }
 
-  @Post()
-  async eval(@Body() dto: EvalDto): Promise<EvalResponseDto> {
-    const { code, language, testCases } = dto;
-
-    const jobId = crypto.randomUUID();
-    this.logger.log(
-      `Received eval request: jobId=${jobId}, language=${language}`,
-    );
-
-    await this.rabbitMQService.publish('code-eval', {
-      jobId,
-      code,
-      language,
-      testCases,
-    });
-
-    return { jobId };
+  @UseGuards(JwtAuthGuard)
+  @Post('/tasks/:taskId')
+  async eval(
+    @Param('taskId', ParseUUIDPipe) taskId: string,
+    @Body() dto: EvalDto,
+    @CurrentUser('id') userId: string,
+  ): Promise<EvalResponseDto> {
+    return this.evalService.dispatch(userId, taskId, dto);
   }
 
   @Sse(':jobId/stream')
   stream(@Param('jobId') jobId: string) {
     this.logger.log(`SSE stream opened for jobId=${jobId}`);
-    return this.sseService.register(jobId);
+    return this.sseService.subscribe(jobId);
   }
 }

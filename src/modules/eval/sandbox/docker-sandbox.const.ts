@@ -1,0 +1,2 @@
+export const SANDBOX_TIMEOUT_MS = 5_000;
+export const SANDBOX_MAX_OUTPUT_BYTES = 1 * 1024 * 1024;
