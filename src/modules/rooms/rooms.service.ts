@@ -9,9 +9,9 @@ export class RoomsService {
 
   create(userId: string, data: CreateRoomDto) {
     const ydoc = new Y.Doc();
-    
+
     ydoc.getText('code').insert(0, data?.initialCode ?? '');
-    
+
     ydoc.getMap('meta').set('language', data?.language ?? 'javascript');
 
     const snapshot = Y.encodeStateAsUpdate(ydoc);

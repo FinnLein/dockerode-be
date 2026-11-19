@@ -3,6 +3,6 @@ import { DockerSandboxService } from './docker-sandbox.service';
 
 @Module({
   providers: [DockerSandboxService],
-  exports: [DockerSandboxService]
+  exports: [DockerSandboxService],
 })
-export class DockerSandboxModule { }
+export class DockerSandboxModule {}

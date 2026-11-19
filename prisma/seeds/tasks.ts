@@ -4,8 +4,10 @@ import { PrismaClient } from '../../src/generated/prisma/client';
 const LANGUAGES = ['javascript', 'golang', 'python'] as const;
 
 const CODE_TEMPLATES: Record<string, string> = {
-  javascript: 'function solution(a, b) {\n  // Write your code here\n  return a + b;\n}',
-  golang: 'func solution(a int, b int) int {\n    // Write your code here\n    return a + b\n}',
+  javascript:
+    'function solution(a, b) {\n  // Write your code here\n  return a + b;\n}',
+  golang:
+    'func solution(a int, b int) int {\n    // Write your code here\n    return a + b\n}',
   python: 'def solution(a, b):\n    # Write your code here\n    return a + b',
 };
 
@@ -56,8 +58,8 @@ export async function seedTasks(prisma: PrismaClient, count = 20) {
           createdAt: task.createdAt,
           updatedAt: task.updatedAt,
         },
-      })
-    )
+      }),
+    ),
   );
 
   console.log(`✅ Seeded ${created.length} tasks.`);

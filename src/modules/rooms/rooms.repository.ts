@@ -33,4 +33,13 @@ export class RoomsRepository {
       },
     });
   }
+
+  saveSnapshot(id: string, snapshot: Uint8Array) {
+    return this.prisma.room.updateMany({
+      where: { id },
+      data: {
+        snapshot: Buffer.from(snapshot),
+      },
+    });
+  }
 }

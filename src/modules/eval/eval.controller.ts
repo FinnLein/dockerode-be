@@ -1,4 +1,13 @@
-import { Body, Controller, Logger, Param, ParseUUIDPipe, Post, Sse, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Logger,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Sse,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '@shared/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@shared/decorators/current-user.decorator';
 import { CheckSupportDto } from './dto/check-support.dto';
@@ -14,7 +23,7 @@ export class EvalController {
   constructor(
     private readonly evalService: EvalService,
     private readonly sseService: SseService,
-  ) { }
+  ) {}
 
   @Post('check')
   async checkSupport(@Body() dto: CheckSupportDto) {

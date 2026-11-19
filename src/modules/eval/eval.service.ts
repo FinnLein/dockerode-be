@@ -13,8 +13,8 @@ export class EvalService {
   constructor(
     private readonly rabbitMQService: RabbitMQService,
     private readonly codeRunnerService: CodeRunnerService,
-    private readonly redisService: RedisService
-  ) { }
+    private readonly redisService: RedisService,
+  ) {}
 
   async dispatch(userId: string, taskId: string, dto: EvalDto) {
     const { code, language, testCases } = dto;
@@ -30,7 +30,9 @@ export class EvalService {
     try {
       const jobId = crypto.randomUUID();
 
-      this.logger.log(`Received eval request: jobId=${jobId}, language=${language}`);
+      this.logger.log(
+        `Received eval request: jobId=${jobId}, language=${language}`,
+      );
 
       await this.rabbitMQService.publish('code-eval', {
         jobId,
@@ -59,7 +61,11 @@ export class EvalService {
         this.logger.debug(`[START] ${name} (${language})`);
 
         try {
-          const result = await this.codeRunnerService.eval({ language, code, testCases });
+          const result = await this.codeRunnerService.eval({
+            language,
+            code,
+            testCases,
+          });
           const duration = Date.now() - start;
 
           this.logger.log(
