@@ -30,7 +30,8 @@ export class CodeRunnerService {
         failed: testCases.length,
         total: testCases.length,
         results: [],
-        stderr: buildResult.logs?.join('') || buildResult.error || 'Build failed',
+        stderr:
+          buildResult.logs?.join('') || buildResult.error || 'Build failed',
         statusCode: -1,
         outputExceeded: false,
         timedOut: false,

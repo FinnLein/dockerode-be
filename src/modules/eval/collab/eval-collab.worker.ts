@@ -14,7 +14,7 @@ export class EvalCollabWorker implements OnModuleInit {
     private readonly rabbitMQService: RabbitMQService,
     private readonly sseCollab: SseCollabService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async onModuleInit() {
     await this.rabbitMQService.consume('code-eval-collab', async (msg) => {
@@ -23,15 +23,15 @@ export class EvalCollabWorker implements OnModuleInit {
         code: string;
         language: string;
         testCases: TestCase[];
-        roomId: string
-        token: string
-      }
+        roomId: string;
+        token: string;
+      };
 
       this.logger.log(`Processing job ${jobId}`);
 
       this.sseCollab.publish(roomId, {
-        data: { type: 'run_started', jobId }
-      })
+        data: { type: 'run_started', jobId },
+      });
 
       try {
         const result = await this.codeRunnerService.eval({
@@ -43,7 +43,7 @@ export class EvalCollabWorker implements OnModuleInit {
         this.logger.log(`Job ${jobId} finished: ${JSON.stringify(result)}`);
 
         this.sseCollab.publish(roomId, {
-          data: { type: 'run_finished', result }
+          data: { type: 'run_finished', result },
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -51,12 +51,11 @@ export class EvalCollabWorker implements OnModuleInit {
         this.logger.error(`Job ${jobId} failed: ${message}`);
 
         this.sseCollab.publish(roomId, {
-          data: { type: 'run_failed', error: message }
+          data: { type: 'run_failed', error: message },
         });
       } finally {
         await this.redisService.release(roomId, token);
       }
-
     });
   }
 }

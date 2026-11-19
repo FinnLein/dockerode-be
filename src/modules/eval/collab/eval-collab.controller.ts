@@ -1,4 +1,12 @@
-import { Body, Controller, Logger, Param, Post, Sse, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Logger,
+  Param,
+  Post,
+  Sse,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '@shared/auth/guards/jwt-auth.guard';
 import { EvalCollabDto } from './dto/eval-collab.dto';
 import { EvalCollabService } from './eval-collab.service';
@@ -11,7 +19,7 @@ export class EvalCollabController {
   constructor(
     private readonly sseCollab: SseCollabService,
     private readonly evalCollabService: EvalCollabService,
-  ) { }
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post()
