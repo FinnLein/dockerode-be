@@ -9,11 +9,7 @@ import { SseService } from './sse.service';
 @Module({
   imports: [CodeRunnerModule, EvalCollabModule],
   controllers: [EvalController],
-  providers: [
-    EvalService,
-    EvalWorker,
-    SseService,
-  ],
+  providers: [EvalService, EvalWorker, SseService],
   exports: [EvalService],
 })
-export class EvalModule { }
+export class EvalModule {}

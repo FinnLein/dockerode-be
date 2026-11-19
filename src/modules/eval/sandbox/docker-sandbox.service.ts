@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import Docker from 'dockerode';
 import { buildImageFromTar } from 'src/shared/docker/utils/buildImageFromTar';
 import { PassThrough } from 'stream';
-import { SANDBOX_MAX_OUTPUT_BYTES, SANDBOX_TIMEOUT_MS } from './docker-sandbox.const';
+import {
+  SANDBOX_MAX_OUTPUT_BYTES,
+  SANDBOX_TIMEOUT_MS,
+} from './docker-sandbox.const';
 import { LogsResult, RunResult } from './docker-sandbox.types';
 
 @Injectable()

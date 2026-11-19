@@ -10,8 +10,8 @@ interface JobData {
   code: string;
   language: string;
   testCases: TestCase[];
-  lockKey: string
-  lockToken: string
+  lockKey: string;
+  lockToken: string;
 }
 
 @Injectable()
@@ -23,18 +23,18 @@ export class EvalWorker implements OnModuleInit {
     private readonly rabbitMQService: RabbitMQService,
     private readonly redisService: RedisService,
     private readonly sseService: SseService,
-  ) { }
+  ) {}
 
   async onModuleInit() {
     await this.rabbitMQService.consume('code-eval', async (msg) => {
-      const { jobId, code, language, testCases, lockKey, lockToken } = msg as JobData
+      const { jobId, code, language, testCases, lockKey, lockToken } =
+        msg as JobData;
 
       this.logger.log(`Processing job ${jobId}`);
 
-
       this.sseService.publish(jobId, {
-        data: { type: 'run_started', jobId }
-      })
+        data: { type: 'run_started', jobId },
+      });
 
       try {
         const result = await this.codeRunnerService.eval({
@@ -46,19 +46,19 @@ export class EvalWorker implements OnModuleInit {
         this.logger.log(`Job ${jobId} finished: ${JSON.stringify(result)}`);
 
         this.sseService.publish(jobId, {
-          data: { type: 'run_finished', result }
+          data: { type: 'run_finished', result },
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         this.logger.error(`Job ${jobId} failed: ${message}`);
 
         this.sseService.publish(jobId, {
-          data: { type: 'run_failed', error: message }
+          data: { type: 'run_failed', error: message },
         });
 
         throw error;
       } finally {
-        await this.redisService.release(lockKey, lockToken)
+        await this.redisService.release(lockKey, lockToken);
       }
     });
   }

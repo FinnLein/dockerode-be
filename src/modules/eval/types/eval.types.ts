@@ -1,33 +1,32 @@
 interface TestCase {
-	input: string;
-	expected: string;
+  input: string;
+  expected: string;
 }
 
 interface TestCaseResult {
-	index: number;
-	passed: boolean;
-	actual: string;
-	expected: string;
-	error?: string;
+  index: number;
+  passed: boolean;
+  actual: string;
+  expected: string;
+  error?: string;
 }
 
 interface TestResult {
-	success: boolean;
-	passed: number;
-	failed: number;
-	total: number;
-	results: TestCaseResult[];
-	stderr: string;
-	statusCode: number;
-	outputExceeded: boolean;
-	timedOut: boolean;
+  success: boolean;
+  passed: number;
+  failed: number;
+  total: number;
+  results: TestCaseResult[];
+  stderr: string;
+  statusCode: number;
+  outputExceeded: boolean;
+  timedOut: boolean;
 }
 
 interface ParsedResult {
-	index: number;
-	actual: string;
-	error?: string;
+  index: number;
+  actual: string;
+  error?: string;
 }
 
 export type { ParsedResult, TestCase, TestCaseResult, TestResult };
-

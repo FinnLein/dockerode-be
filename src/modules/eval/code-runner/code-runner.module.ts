@@ -6,6 +6,6 @@ import { CodeRunnerService } from './code-runner.service';
 @Module({
   imports: [DockerSandboxModule, RunnerModule],
   providers: [CodeRunnerService],
-  exports: [CodeRunnerService]
+  exports: [CodeRunnerService],
 })
-export class CodeRunnerModule { } 
+export class CodeRunnerModule {}
