@@ -12,7 +12,7 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🔄 Cleaning up database...');
-  
+
   await prisma.task.deleteMany({});
   await prisma.user.deleteMany({});
 

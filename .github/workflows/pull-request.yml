@@ -23,7 +23,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Formating
-        run: pnpm format
+        run: pnpm format:check
 
   typecheck:
     runs-on: ubuntu-latest

@@ -9,6 +9,6 @@ import { SseCollabService } from './sse-collab.service';
 @Module({
   imports: [RoomsModule, CodeRunnerModule],
   controllers: [EvalCollabController],
-  providers: [EvalCollabService, EvalCollabWorker, SseCollabService]
+  providers: [EvalCollabService, EvalCollabWorker, SseCollabService],
 })
 export class EvalCollabModule {}

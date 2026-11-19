@@ -4,7 +4,7 @@ import { EvalStreamEvent } from '../types/stream.types';
 
 @Injectable()
 export class SseCollabService {
-  private readonly BUFFER = 1
+  private readonly BUFFER = 1;
   private readonly subjects = new Map<string, ReplaySubject<MessageEvent>>();
   private readonly cleanups = new Map<string, NodeJS.Timeout>();
 
@@ -23,19 +23,18 @@ export class SseCollabService {
     }
 
     return new Observable<MessageEvent>((subscriber) => {
-      const inner = subject.subscribe(subscriber)
+      const inner = subject.subscribe(subscriber);
 
       return () => {
         inner.unsubscribe();
 
         if (!subject.observed) {
           const t = setTimeout(() => {
-
             if (!subject.observed) {
               this.subjects.delete(roomId);
               this.cleanups.delete(roomId);
             }
-          }, 30_000)
+          }, 30_000);
 
           this.cleanups.set(roomId, t);
         }
