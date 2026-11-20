@@ -30,7 +30,7 @@
     "prisma:reset": "pnpm prisma migrate reset",
     "prisma:seed": "pnpm prisma db seed",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1172.0",
