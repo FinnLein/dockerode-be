@@ -4,6 +4,7 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Channel, ChannelModel, connect, ConsumeMessage } from 'amqplib';
 
 @Injectable()
@@ -12,6 +13,8 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
 
   private connection: ChannelModel | null = null;
   private channel: Channel | null = null;
+
+  constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit() {
     await this.connect();
@@ -83,7 +86,10 @@ export class RabbitMQService implements OnModuleDestroy, OnModuleInit {
   }
 
   private async connect() {
-    const url = process.env.RABBITMQ_URL || 'amqp://user:pass@localhost:5672';
+    const url = this.configService.get<string>(
+      'RABBITMQ_URL',
+      'amqp://user:pass@localhost:5672',
+    );
 
     try {
       this.connection = await connect(url);

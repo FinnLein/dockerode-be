@@ -1,5 +1,6 @@
 import { UsersModule } from '@modules/users/users.module';
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
@@ -10,9 +11,13 @@ import { JwtStrategy } from './jwt.strategy';
   imports: [
     UsersModule,
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'super-secret-change-me',
-      signOptions: { expiresIn: '7d' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get('JWT_SECRET', 'super-secret-change-me'),
+        signOptions: { expiresIn: '7d' },
+      }),
+      inject: [ConfigService],
     }),
   ],
   controllers: [AuthController],

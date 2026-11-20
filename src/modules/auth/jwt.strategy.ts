@@ -1,5 +1,6 @@
 import { UsersService } from '@modules/users/users.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { Strategy } from 'passport-jwt';
@@ -17,11 +18,14 @@ const cookieExtractor = (req: Request): string | null => {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly usersService: UsersService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly usersService: UsersService,
+  ) {
     super({
       jwtFromRequest: cookieExtractor,
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'super-secret-change-me',
+      secretOrKey: config.get('JWT_SECRET', 'super-secret-change-me'),
     });
   }
 
@@ -30,6 +34,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('Пользователь не найден');
     }
-    return user;
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
   }
 }

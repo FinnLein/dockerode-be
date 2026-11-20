@@ -1,18 +1,20 @@
 enum UserRole {
   user
   admin
+  guest
 }
 
 model User {
   id String @id @default(uuid())
 
-  name     String?
-  email    String   @unique
-  password String
-  role     UserRole @default(user)
+  name      String?
+  email     String?  @unique
+  password  String?
+  role      UserRole @default(user)
+  avatarUrl String?
 
   createdAt DateTime @default(now())
-  taskRooms     Room[]
+  taskRooms Room[]
 
   @@map("user")
 }

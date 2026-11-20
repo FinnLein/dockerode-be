@@ -1,3 +1,4 @@
+import { S3Service } from '@config/s3/s3.service';
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@shared/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@shared/decorators/current-user.decorator';
@@ -6,7 +7,10 @@ import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
@@ -17,6 +21,11 @@ export class UsersController {
 
     const { password: _, ...rest } = user;
 
-    return rest;
+    return {
+      ...rest,
+      avatarUrl: rest.avatarUrl
+        ? this.s3Service.getPublicUrl(rest.avatarUrl)
+        : null,
+    };
   }
 }
