@@ -1,33 +1,8 @@
+name: dockerode-be 
 services:
-  app:
-    build:
-      context: .
-      target: development
-    restart: unless-stopped
-    ports:
-      - '5000:5000'
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=300
-      - RABBITMQ_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@${RABBIT_HOST}:${RABBIT_PORT}
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
-    command: pnpm run dev
-    depends_on:
-      rabbit:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
   rabbit:
+    container_name: rabbit-dockerode
     image: rabbitmq:4-management
-    restart: unless-stopped
     ports:
       - '5672:5672'
       - '15672:15672'
@@ -41,8 +16,8 @@ services:
       - RABBITMQ_DEFAULT_PASS=${RABBIT_PASS}
 
   postgres:
+    container_name: postgres-dockerode
     image: postgres:18.6-alpine
-    restart: unless-stopped
     ports:
       - '5433:5432'
     environment:
@@ -58,8 +33,10 @@ services:
       - postgres_data:/var/lib/postgresql
 
   redis:
+    container_name: redis-dockerode
     image: redis:8.8.4-alpine3.23
-    restart: unless-stopped
+    ports:
+      - '6379:6379'
     command: ['redis-server', '--requirepass', '${REDIS_PASSWORD}']
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -71,6 +48,42 @@ services:
     volumes:
       - redis_data:/data
 
+  rustfs-perms:
+    container_name: rustfs-perms
+    image: alpine:3.24.4
+    user: root
+    volumes:
+      - rustfs_data:/data/rustfs0
+    command: ["sh", "-c", "chown -R 10001:10001 /data/rustfs0"]
+
+  rustfs:
+    container_name: rustfs-dockerode
+    image: rustfs/rustfs:1.0.6
+    restart: unless-stopped
+    depends_on:
+      rustfs-perms:
+        condition: service_completed_successfully
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      RUSTFS_VOLUMES: /data/rustfs0
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin123}
+      RUSTFS_CORS_ALLOWED_ORIGINS: ${FRONTEND_URL:-http://localhost:3000}
+    volumes:
+      - rustfs_data:/data/rustfs0
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:9000/health > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 volumes:
   postgres_data:
   redis_data:
+  rustfs_data:

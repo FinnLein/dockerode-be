@@ -1,6 +1,6 @@
 import { PrismaService } from '@config/prisma';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from 'src/generated/prisma/client';
+import { Prisma, UserRole } from 'src/generated/prisma/client';
 
 @Injectable()
 export class UsersRepository {
@@ -25,6 +25,20 @@ export class UsersRepository {
   create(data: Prisma.UserCreateInput) {
     return this.prisma.user.create({
       data,
+    });
+  }
+
+  createGuest(data: { name: string; avatarUrl: string }) {
+    const { name, avatarUrl } = data;
+
+    console.log(avatarUrl, 'repo');
+
+    return this.prisma.user.create({
+      data: {
+        name,
+        avatarUrl,
+        role: UserRole.guest,
+      },
     });
   }
 }

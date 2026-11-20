@@ -1,6 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-// Импортируем клиент из вашего кастомного пути генерации
 import { PrismaClient } from '../src/generated/prisma/client';
 import { seedTasks } from './seeds/tasks';
 import { seedUsers } from './seeds/users';

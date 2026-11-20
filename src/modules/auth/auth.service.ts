@@ -31,6 +31,7 @@ export class AuthService {
     const token = await this.jwtService.signAsync({
       id: user.id,
       email: user.email,
+      role: user.role,
     });
 
     return { token, message: 'Вы успешно зарегистрировались' };
@@ -40,7 +41,7 @@ export class AuthService {
     const { email, password } = dto;
 
     const user = await this.usersService.findByEmail(email);
-    if (!user) {
+    if (!user || !user.password) {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
@@ -52,8 +53,24 @@ export class AuthService {
     const token = await this.jwtService.signAsync({
       id: user.id,
       email: user.email,
+      role: user.role,
     });
 
     return { token, message: 'Вы успешно вошли' };
+  }
+
+  async loginAsGuest() {
+    const user = await this.usersService.createGuest();
+
+    const token = await this.jwtService.signAsync({
+      id: user.id,
+      role: user.role,
+    });
+
+    return {
+      token,
+      user,
+      message: 'Гостевой вход выполнен',
+    };
   }
 }

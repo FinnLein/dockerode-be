@@ -1,5 +1,7 @@
+name: dockerode-be 
 services:
   app:
+    container_name: app-dockerode-prod
     build:
       context: .
       target: production
@@ -9,6 +11,13 @@ services:
       - RABBITMQ_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@${RABBIT_HOST}:${RABBIT_PORT}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - S3_ENDPOINT=http://rustfs:9000
+      - S3_PUBLIC_URL=${S3_PUBLIC_URL}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+      - S3_REGION=${S3_REGION}
+
     depends_on:
       rabbit:
         condition: service_healthy
@@ -18,9 +27,12 @@ services:
         condition: service_healthy
       migrator:
         condition: service_completed_successfully
+      rustfs:
+        condition: service_healthy
     restart: unless-stopped
 
   migrator:
+    container_name: migrator-dockerode-prod
     build:
       context: .
       target: builder
@@ -33,6 +45,7 @@ services:
     restart: 'no'
 
   rabbit:
+    container_name: rabbit-dockerode-prod
     image: rabbitmq:4-management
     healthcheck:
       test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
@@ -45,6 +58,7 @@ services:
     restart: unless-stopped
 
   postgres:
+    container_name: postgres-dockerode-prod
     image: postgres:18.6-alpine
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
@@ -60,6 +74,7 @@ services:
     restart: unless-stopped
 
   redis:
+    container_name: redis-dockerode-prod
     image: redis:8.8.4-alpine3.23
     command: ['redis-server', '--requirepass', '${REDIS_PASSWORD}']
     environment:
@@ -73,6 +88,42 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
+  rustfs-perms:
+    container_name: rustfs-perms-prod
+    image: alpine:3.24.4
+    user: root
+    volumes:
+      - rustfs_data:/data/rustfs0
+    command: ["sh", "-c", "chown -R 10001:10001 /data/rustfs0"]
+
+  rustfs:
+    container_name: rustfs-dockerode-prod
+    image: rustfs/rustfs:1.0.6
+    restart: unless-stopped
+    depends_on:
+      rustfs-perms:
+        condition: service_completed_successfully
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      RUSTFS_VOLUMES: /data/rustfs0
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin123}
+      RUSTFS_CORS_ALLOWED_ORIGINS: ${FRONTEND_URL:-http://localhost:3000}
+    volumes:
+      - rustfs_data:/data/rustfs0
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:9000/health > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 volumes:
   postgres_data:
   redis_data:
+  rustfs_data:
