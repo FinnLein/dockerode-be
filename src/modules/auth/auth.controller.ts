@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { GuestAuthResponseDto } from './dto/guest-auth-response.dto';
+import { GuestLoginDto } from './dto/guest-login.dto';
 import { AuthorizeDto } from './dto/register.dto';
 
 @Controller('auth')
@@ -60,9 +61,12 @@ export class AuthController {
 
   @Post('guest')
   async loginAsGuest(
+    @Body() dto: GuestLoginDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GuestAuthResponseDto> {
-    const { token, user, message } = await this.authService.loginAsGuest();
+    const { token, user, message } = await this.authService.loginAsGuest(
+      dto?.name,
+    );
     this.setTokenCookie(res, token);
 
     return {
