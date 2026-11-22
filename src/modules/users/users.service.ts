@@ -39,21 +39,26 @@ export class UsersService {
     return this.usersRepository.create(data);
   }
 
-  async createGuest() {
+  async createGuest(customName?: string | null) {
+    const trimmedName = customName?.trim();
+    const guestName = trimmedName || this.generateRandomGuestName();
+
+    const avatarUrl = await this.generateAndUploadAvatar(
+      `${guestName}-${randomUUID()}`,
+    );
+
+    return this.usersRepository.createGuest({
+      name: guestName,
+      avatarUrl,
+    });
+  }
+
+  private generateRandomGuestName(): string {
     const rawName = `${faker.word.adjective()} ${faker.animal.type()}`;
     const formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
     const tag = faker.number.int({ min: 100, max: 999 });
 
-    const name = `${formattedName} #${tag}`;
-
-    const avatarUrl = await this.generateAndUploadAvatar(name);
-
-    console.log(avatarUrl);
-
-    return this.usersRepository.createGuest({
-      name,
-      avatarUrl,
-    });
+    return `${formattedName} #${tag}`;
   }
 
   private async generateAndUploadAvatar(seed: string): Promise<string> {

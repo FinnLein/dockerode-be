@@ -59,8 +59,8 @@ export class AuthService {
     return { token, message: 'Вы успешно вошли' };
   }
 
-  async loginAsGuest() {
-    const user = await this.usersService.createGuest();
+  async loginAsGuest(name?: string | null) {
+    const user = await this.usersService.createGuest(name);
 
     const token = await this.jwtService.signAsync({
       id: user.id,
